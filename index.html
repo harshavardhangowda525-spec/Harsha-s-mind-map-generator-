@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MindMap — Turn any resource into a living, interactive visual story. An AI-powered mind map generator with a growing daily Storybook." />
+  <meta name="theme-color" content="#0a0a0b" />
+  <title>MindMap — Turn Any Resource Into a Living Story</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='10' fill='%23c9a24b'/%3E%3Ccircle cx='20' cy='25' r='5' fill='%23f4f1ea'/%3E%3Ccircle cx='80' cy='30' r='5' fill='%23f4f1ea'/%3E%3Ccircle cx='25' cy='78' r='5' fill='%23f4f1ea'/%3E%3Ccircle cx='78' cy='75' r='5' fill='%23f4f1ea'/%3E%3Cg stroke='%23c9a24b' stroke-width='1.5' opacity='0.6'%3E%3Cline x1='50' y1='50' x2='20' y2='25'/%3E%3Cline x1='50' y1='50' x2='80' y2='30'/%3E%3Cline x1='50' y1='50' x2='25' y2='78'/%3E%3Cline x1='50' y1='50' x2='78' y2='75'/%3E%3C/g%3E%3C/svg%3E" />
+</head>
+<body>
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="loader__inner">
+      <div class="loader__mark">
+        <span class="loader__dot"></span>
+        <span class="loader__dot"></span>
+        <span class="loader__dot"></span>
+      </div>
+      <div class="loader__text">MINDMAP</div>
+      <div class="loader__bar"><span id="loaderBar"></span></div>
+    </div>
+  </div>
+
+  <!-- Custom cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <!-- Scroll progress -->
+  <div class="scroll-progress"><span id="scrollBar"></span></div>
+
+  <!-- Navigation -->
+  <header class="nav" id="nav">
+    <a href="#hero" class="nav__brand" data-magnetic>
+      <span class="nav__brand-mark"></span>
+      <span class="nav__brand-text">MindMap</span>
+    </a>
+    <nav class="nav__links">
+      <a href="#generator" class="nav__link">Generator</a>
+      <a href="#storybook" class="nav__link">Storybook</a>
+      <a href="#journey" class="nav__link">Journey</a>
+      <a href="#features" class="nav__link">Features</a>
+      <a href="#about" class="nav__link">About</a>
+    </nav>
+    <a href="#generator" class="nav__cta" data-magnetic>
+      <span>Generate</span>
+    </a>
+    <button class="nav__burger" id="burger" aria-label="Menu">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#generator" class="mobile-menu__link">Generator</a>
+    <a href="#storybook" class="mobile-menu__link">Storybook</a>
+    <a href="#journey" class="mobile-menu__link">Journey</a>
+    <a href="#features" class="mobile-menu__link">Features</a>
+    <a href="#about" class="mobile-menu__link">About</a>
+  </div>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="hero">
+      <canvas class="hero__canvas" id="neuralCanvas"></canvas>
+      <div class="hero__veil"></div>
+      <div class="hero__content">
+        <div class="hero__eyebrow reveal">
+          <span class="line"></span>
+          <span>AI KNOWLEDGE CARTOGRAPHY</span>
+        </div>
+        <h1 class="hero__title">
+          <span class="hero__line"><span>Turn Knowledge</span></span>
+          <span class="hero__line"><span>Into a <em>Visual Story.</em></span></span>
+        </h1>
+        <p class="hero__sub reveal">
+          Transform any resource into an intelligent, interactive mind map —
+          and keep building it every day.
+        </p>
+        <div class="hero__actions reveal">
+          <a href="#generator" class="btn btn--gold" data-magnetic>
+            <span>Generate Mind Map</span>
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a href="#how" class="btn btn--ghost" data-magnetic>
+            <span>Explore How It Works</span>
+          </a>
+        </div>
+      </div>
+      <div class="hero__scroll">
+        <span>Scroll to explore</span>
+        <div class="hero__scroll-line"><i></i></div>
+      </div>
+      <div class="hero__meta">
+        <div class="hero__meta-item"><b>01</b><span>Understand</span></div>
+        <div class="hero__meta-item"><b>02</b><span>Connect</span></div>
+        <div class="hero__meta-item"><b>03</b><span>Visualize</span></div>
+        <div class="hero__meta-item"><b>04</b><span>Grow</span></div>
+      </div>
+    </section>
+
+    <!-- ============ MARQUEE ============ -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span>Notes</span><i>✦</i><span>Articles</span><i>✦</i><span>PDFs</span><i>✦</i>
+        <span>Lessons</span><i>✦</i><span>Stories</span><i>✦</i><span>Research</span><i>✦</i>
+        <span>Daily Learning</span><i>✦</i>
+        <span>Notes</span><i>✦</i><span>Articles</span><i>✦</i><span>PDFs</span><i>✦</i>
+        <span>Lessons</span><i>✦</i><span>Stories</span><i>✦</i><span>Research</span><i>✦</i>
+        <span>Daily Learning</span><i>✦</i>
+      </div>
+    </div>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section class="how" id="how">
+      <div class="section-head">
+        <span class="section-head__num">( 01 )</span>
+        <h2 class="section-head__title reveal-lines">The&nbsp;Method</h2>
+        <p class="section-head__lead reveal">
+          A quiet, deliberate process. Paste a source, and watch structure
+          emerge from the noise — concepts, relationships, and narrative,
+          composed into a single living map.
+        </p>
+      </div>
+      <div class="how__grid">
+        <article class="how__step reveal">
+          <span class="how__step-index">I</span>
+          <h3>Provide a Source</h3>
+          <p>Paste text, drop a document, or name a topic. Anything you're learning today becomes raw material.</p>
+        </article>
+        <article class="how__step reveal">
+          <span class="how__step-index">II</span>
+          <h3>AI Reads Deeply</h3>
+          <p>Key concepts, hierarchies, examples and connections are extracted and weighted for importance.</p>
+        </article>
+        <article class="how__step reveal">
+          <span class="how__step-index">III</span>
+          <h3>A Map Appears</h3>
+          <p>Ideas arrange themselves into an interactive constellation you can expand, explore, and reshape.</p>
+        </article>
+        <article class="how__step reveal">
+          <span class="how__step-index">IV</span>
+          <h3>It Grows Daily</h3>
+          <p>Each new resource attaches to what you already know, building an ever-deepening visual story.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ GENERATOR ============ -->
+    <section class="gen" id="generator">
+      <div class="section-head">
+        <span class="section-head__num">( 02 )</span>
+        <h2 class="section-head__title reveal-lines">The&nbsp;Studio</h2>
+        <p class="section-head__lead reveal">
+          Your workspace for turning raw knowledge into a beautiful, interactive map.
+        </p>
+      </div>
+
+      <div class="gen__layout">
+        <!-- Input panel -->
+        <aside class="gen__panel glass">
+          <div class="gen__tabs" id="genTabs">
+            <button class="gen__tab is-active" data-tab="paste">Paste Text</button>
+            <button class="gen__tab" data-tab="upload">Upload</button>
+            <button class="gen__tab" data-tab="topic">Topic</button>
+          </div>
+
+          <div class="gen__tabpane is-active" data-pane="paste">
+            <textarea id="sourceText" class="gen__textarea" placeholder="Paste your notes, an article, a lesson, or a story here…&#10;&#10;The AI will read it and compose an interactive mind map."></textarea>
+            <div class="gen__hint">
+              <button class="gen__sample" id="loadSample">Load a sample resource</button>
+              <span id="charCount">0 characters</span>
+            </div>
+          </div>
+
+          <div class="gen__tabpane" data-pane="upload">
+            <label class="gen__drop" id="dropZone">
+              <input type="file" id="fileInput" accept=".txt,.md,.pdf,.csv,.json" hidden />
+              <svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>
+              <b>Drop a document</b>
+              <span>.txt, .md, .pdf, .csv — or click to browse</span>
+            </label>
+            <div class="gen__file" id="fileInfo" hidden></div>
+          </div>
+
+          <div class="gen__tabpane" data-pane="topic">
+            <input type="text" id="topicInput" class="gen__input" placeholder="e.g. The Roman Empire, Neural Networks, Photosynthesis…" />
+            <div class="gen__chips">
+              <button class="chip" data-topic="The Solar System">The Solar System</button>
+              <button class="chip" data-topic="Machine Learning">Machine Learning</button>
+              <button class="chip" data-topic="Ancient Greece">Ancient Greece</button>
+              <button class="chip" data-topic="Climate Change">Climate Change</button>
+            </div>
+          </div>
+
+          <button class="btn btn--gold btn--block" id="generateBtn" data-magnetic>
+            <span>Generate Mind Map</span>
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+
+          <div class="gen__addstory">
+            <button class="btn btn--ghost btn--block" id="addToStoryBtn" data-magnetic>
+              <span>Add as today's chapter</span>
+            </button>
+            <p class="gen__addstory-note">Grows your Storybook instead of starting fresh.</p>
+          </div>
+        </aside>
+
+        <!-- Map canvas -->
+        <div class="gen__stage glass">
+          <div class="gen__toolbar">
+            <div class="gen__toolbar-group">
+              <button class="tool" data-action="regenerate" title="Regenerate">↻ <span>Regenerate</span></button>
+              <button class="tool" data-action="expand" title="Expand all">⊕ <span>Expand</span></button>
+              <button class="tool" data-action="summarize" title="Summarize">≡ <span>Summarize</span></button>
+              <button class="tool" data-action="explain" title="Explain node">✦ <span>Explain</span></button>
+            </div>
+            <div class="gen__toolbar-group">
+              <button class="tool" data-action="layout" title="Change layout">◇ <span>Layout</span></button>
+              <button class="tool" data-action="export" title="Export as image">↧ <span>Export</span></button>
+              <button class="tool" data-action="save" title="Save">◈ <span>Save</span></button>
+            </div>
+          </div>
+
+          <div class="gen__viewport" id="viewport">
+            <svg class="gen__svg" id="mapSvg"></svg>
+            <div class="gen__empty" id="mapEmpty">
+              <div class="gen__empty-orbit">
+                <span></span><span></span><span></span>
+              </div>
+              <b>Your mind map will bloom here</b>
+              <p>Provide a source on the left, then press <em>Generate</em>.</p>
+            </div>
+            <div class="gen__loading" id="mapLoading" hidden>
+              <div class="gen__loading-ring"></div>
+              <span id="mapLoadingText">Reading your resource…</span>
+            </div>
+          </div>
+
+          <div class="gen__zoom">
+            <button data-zoom="out">−</button>
+            <span id="zoomLevel">100%</span>
+            <button data-zoom="in">+</button>
+            <button data-zoom="fit" class="gen__zoom-fit">Fit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail drawer -->
+      <div class="drawer" id="drawer">
+        <button class="drawer__close" id="drawerClose">×</button>
+        <span class="drawer__kicker" id="drawerKicker">Concept</span>
+        <h3 class="drawer__title" id="drawerTitle"></h3>
+        <p class="drawer__body" id="drawerBody"></p>
+        <div class="drawer__tags" id="drawerTags"></div>
+      </div>
+    </section>
+
+    <!-- ============ STORYBOOK ============ -->
+    <section class="story" id="storybook">
+      <div class="section-head">
+        <span class="section-head__num">( 03 )</span>
+        <h2 class="section-head__title reveal-lines">Storybook&nbsp;Mode</h2>
+        <p class="section-head__lead reveal">
+          Don't build one static map. Build a growing visual story — one chapter
+          each day. New knowledge intelligently attaches to what you already know.
+        </p>
+      </div>
+
+      <div class="story__timeline" id="storyTimeline"></div>
+
+      <div class="story__stage">
+        <div class="story__map glass">
+          <svg id="storySvg"></svg>
+          <div class="story__caption" id="storyCaption">Day 01 — the seed of your story</div>
+        </div>
+        <div class="story__side">
+          <div class="story__intel">
+            <h4>How the AI grows your map</h4>
+            <ul>
+              <li><span>◇</span> Detects connections to previous resources</li>
+              <li><span>◇</span> Creates new branches when needed</li>
+              <li><span>◇</span> Merges related concepts</li>
+              <li><span>◇</span> Highlights newly added information</li>
+              <li><span>◇</span> Preserves the overall structure</li>
+            </ul>
+          </div>
+          <button class="btn btn--gold btn--block" id="storyNext" data-magnetic>
+            <span>Add the next day →</span>
+          </button>
+          <button class="btn btn--ghost btn--block" id="storyReset" data-magnetic>
+            <span>Reset story</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PARALLAX STATEMENT ============ -->
+    <section class="parallax" id="parallax">
+      <canvas class="parallax__canvas" id="parallaxCanvas"></canvas>
+      <div class="parallax__inner">
+        <p class="parallax__kicker reveal">CUMULATIVE KNOWLEDGE</p>
+        <h2 class="parallax__statement">
+          Every day adds another
+          <em>layer</em> to your story.
+        </h2>
+      </div>
+    </section>
+
+    <!-- ============ JOURNEY / DASHBOARD ============ -->
+    <section class="journey" id="journey">
+      <div class="section-head">
+        <span class="section-head__num">( 04 )</span>
+        <h2 class="section-head__title reveal-lines">Your&nbsp;Knowledge&nbsp;Journey</h2>
+        <p class="section-head__lead reveal">
+          A premium dashboard of everything you've learned. Watch your understanding
+          compound, one resource at a time.
+        </p>
+      </div>
+
+      <div class="journey__stats">
+        <div class="journey__stat reveal"><b data-count="0" data-target="128">0</b><span>Concepts mapped</span></div>
+        <div class="journey__stat reveal"><b data-count="0" data-target="24">0</b><span>Resources added</span></div>
+        <div class="journey__stat reveal"><b data-count="0" data-target="86">0</b><span>Connections found</span></div>
+        <div class="journey__stat reveal"><b data-count="0" data-target="12">0</b><span>Day streak</span></div>
+      </div>
+
+      <div class="journey__grid" id="journeyGrid"></div>
+    </section>
+
+    <!-- ============ FEATURES ============ -->
+    <section class="features" id="features">
+      <div class="section-head">
+        <span class="section-head__num">( 05 )</span>
+        <h2 class="section-head__title reveal-lines">The&nbsp;Intelligence</h2>
+        <p class="section-head__lead reveal">Five capabilities working in concert.</p>
+      </div>
+
+      <div class="features__list" id="featuresList">
+        <article class="feature reveal" data-feature>
+          <span class="feature__index">01</span>
+          <h3 class="feature__name">Understand</h3>
+          <p class="feature__desc">The AI extracts the concepts that matter and weighs their importance — separating signal from noise.</p>
+          <span class="feature__glyph">◐</span>
+        </article>
+        <article class="feature reveal" data-feature>
+          <span class="feature__index">02</span>
+          <h3 class="feature__name">Connect</h3>
+          <p class="feature__desc">It finds relationships between new and existing knowledge, weaving today into everything before.</p>
+          <span class="feature__glyph">◑</span>
+        </article>
+        <article class="feature reveal" data-feature>
+          <span class="feature__index">03</span>
+          <h3 class="feature__name">Visualize</h3>
+          <p class="feature__desc">Information becomes an intuitive, interactive map — expand, collapse, zoom, and rearrange freely.</p>
+          <span class="feature__glyph">◒</span>
+        </article>
+        <article class="feature reveal" data-feature>
+          <span class="feature__index">04</span>
+          <h3 class="feature__name">Grow</h3>
+          <p class="feature__desc">Your Storybook expands continuously as daily resources attach to relevant existing concepts.</p>
+          <span class="feature__glyph">◓</span>
+        </article>
+        <article class="feature reveal" data-feature>
+          <span class="feature__index">05</span>
+          <h3 class="feature__name">Recall</h3>
+          <p class="feature__desc">Complex information becomes effortless to review — a visual memory you can walk through anytime.</p>
+          <span class="feature__glyph">◉</span>
+        </article>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT (text fill) ============ -->
+    <section class="about" id="about">
+      <p class="about__kicker reveal">( THE PHILOSOPHY )</p>
+      <h2 class="about__text" id="aboutText">
+        Don't just collect information. Build a visual map of what you know.
+      </h2>
+      <p class="about__note reveal">
+        MindMap is made for students, researchers, creators, readers, and anyone
+        who would rather see their knowledge than merely store it. Every note you
+        take, every article you read, every lesson you learn — woven into one
+        beautiful, ever-growing constellation.
+      </p>
+    </section>
+
+    <!-- ============ FINAL CTA ============ -->
+    <section class="final" id="final">
+      <canvas class="final__canvas" id="finalCanvas"></canvas>
+      <div class="final__inner">
+        <p class="final__kicker reveal">BEGIN</p>
+        <h2 class="final__title reveal-lines">Ready to build your<br />knowledge story?</h2>
+        <a href="#generator" class="btn btn--gold btn--lg" data-magnetic>
+          <span>Create Your First Mind Map</span>
+          <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <span class="nav__brand-mark"></span>
+        <span>MindMap</span>
+      </div>
+      <p class="footer__tag">Turn any resource into a living story.</p>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 MindMap. Knowledge, made visible.</span>
+      <div class="footer__links">
+        <a href="#generator">Generator</a>
+        <a href="#storybook">Storybook</a>
+        <a href="#features">Features</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/generator.js"></script>
+  <script src="js/mindmap.js"></script>
+  <script src="js/storybook.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

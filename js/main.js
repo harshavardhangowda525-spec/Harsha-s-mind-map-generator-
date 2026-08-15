@@ -470,16 +470,18 @@
   /* ---- Add the Studio's current source as a Storybook chapter ---- */
   $('#addToStoryBtn').addEventListener('click', () => {
     const inp = activeInput();
+    if (!isEditing()) backToCurrent();
     if (inp.type === 'topic') {
       if (!inp.value) { flash('Enter a topic first.'); return; }
-      addChapter(inp.value, inp.value, 'topic');
+      if (!activeBook.title) activeBook.title = inp.value;
+      addChapter(inp.value, 'topic');
     } else {
       if (!inp.value || inp.value.length < 30) { flash('Add a resource to append (30+ characters).'); return; }
-      addChapter(inp.value, '', 'text');
+      addChapter(inp.value, 'text');
     }
-    flash(storyChapters.length === 1
-      ? 'Story seeded from your resource — scroll down.'
-      : 'Added chapter ' + storyChapters.length + ' to your story.');
+    flash(activeBook.chapters.length === 1
+      ? 'Storybook started from your resource — scroll down.'
+      : 'Added chapter ' + activeBook.chapters.length + ' to your storybook.');
     document.getElementById('storybook').scrollIntoView({ behavior: 'smooth' });
   });
 
@@ -497,35 +499,71 @@
     toast._t = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(-50%) translateY(20px)'; }, 2600);
   }
   /* =========================================================
-     STORYBOOK — user-provided chapters that grow one evolving map
+     STORYBOOK — a persistent reading journal.
+     One active storybook grows chapter-by-chapter (saved to this
+     browser). Press "Finished" to archive it into your collection
+     and begin a fresh one. Nothing auto-restarts.
      ========================================================= */
   const storySvg = $('#storySvg'), storyCaption = $('#storyCaption'), storyEmpty = $('#storyEmpty');
   const storyMap = new MindMap(storySvg, { layout: 'radial', animate: !reduce, interactive: true, onSelect: openDrawer });
   const timeline = $('#storyTimeline');
+  const composeEl = $('.story__compose');
 
-  // Each chapter is a source YOU provide: { label, title, value, kind }
-  let storyChapters = [];
-  let storyRoot = null, storyDayIndex = -1;
+  const LS = { active: 'mindmap.activeBook', finished: 'mindmap.finishedBooks' };
+  let activeBook = { title: '', chapters: [] };   // chapter: { label, dayTitle, value, kind }
+  let finishedBooks = [];
+  let viewingFinished = null;                       // index into finishedBooks, or null
+  let viewingExample = false;                       // read-only demo view
+  let storyRoot = null;
 
+  // Read-only example storybook (never persisted, never clobbers your draft)
+  const exampleBook = { title: 'Learning', chapters: Storybook.DAYS.map(d => ({ label: d.day, dayTitle: d.title, value: d.text, kind: 'text' })) };
+  const isEditing = () => viewingFinished == null && !viewingExample;
+
+  function loadState() {
+    try {
+      activeBook = JSON.parse(localStorage.getItem(LS.active) || 'null') || { title: '', chapters: [] };
+      finishedBooks = JSON.parse(localStorage.getItem(LS.finished) || '[]');
+    } catch (e) { activeBook = { title: '', chapters: [] }; finishedBooks = []; }
+  }
+  function saveState() {
+    try {
+      localStorage.setItem(LS.active, JSON.stringify(activeBook));
+      localStorage.setItem(LS.finished, JSON.stringify(finishedBooks));
+    } catch (e) { /* private mode / quota — stay in memory */ }
+  }
+
+  const currentView = () => (viewingExample ? exampleBook
+    : (viewingFinished == null ? activeBook : finishedBooks[viewingFinished]));
   function clearNew(node) { node.isNew = false; (node.children || []).forEach(clearNew); }
+  function countConcepts(node) { let c = 0; (node.children || []).forEach(ch => { c += 1 + countConcepts(ch); }); return c; }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function inferTitle(text) {
+    const first = (text.split(/\n/)[0] || '').trim().replace(/^#+\s*/, '');
+    if (first && first.length <= 60 && first.length > 3) return first;
+    return MindGen.clean(text).split(' ').slice(0, 4).join(' ');
+  }
 
-  function mapFor(ch, isSeed) {
-    if (ch.kind === 'topic') return MindGen.fromTopic(ch.value);
-    return MindGen.fromText(ch.value, isSeed ? { title: ch.title } : undefined);
+  function mapFor(ch, seedTitle) {
+    if (ch.kind === 'topic') return MindGen.fromTopic(seedTitle || ch.value);
+    return MindGen.fromText(ch.value, seedTitle ? { title: seedTitle } : undefined);
   }
 
   function buildStoryUpTo(index) {
-    if (!storyChapters.length) { storyRoot = null; return; }
-    storyRoot = mapFor(storyChapters[0], true).root;
+    const view = currentView();
+    if (!view || !view.chapters.length) { storyRoot = null; return; }
+    const seedTitle = view.title || inferTitle(view.chapters[0].value);
+    storyRoot = mapFor(view.chapters[0], seedTitle).root;
     for (let d = 1; d <= index; d++) {
       clearNew(storyRoot);                          // only the latest chapter stays highlighted
-      MindGen.mergeIntoStory(storyRoot, mapFor(storyChapters[d], false), d);
+      MindGen.mergeIntoStory(storyRoot, mapFor(view.chapters[d], null), d);
     }
   }
 
   function renderTimeline() {
+    const view = currentView();
     timeline.innerHTML = '';
-    storyChapters.forEach((c, i) => {
+    (view ? view.chapters : []).forEach((c, i) => {
       const el = document.createElement('div');
       el.className = 'story__day';
       el.innerHTML = '<span class="story__day-dot"></span><span class="story__day-label">' + c.label + '</span>';
@@ -535,13 +573,13 @@
   }
 
   function goToDay(index) {
-    if (index < 0 || !storyChapters.length) {
-      storyDayIndex = -1; storyRoot = null;
+    const view = currentView();
+    if (index < 0 || !view || !view.chapters.length) {
+      storyRoot = null;
       storyEmpty.hidden = false; storyCaption.textContent = '';
       renderTimeline();
       return;
     }
-    storyDayIndex = index;
     buildStoryUpTo(index);
     storyEmpty.hidden = true;
     storyMap.setData(storyRoot);
@@ -549,50 +587,146 @@
       el.classList.toggle('is-active', i === index);
       el.classList.toggle('is-done', i < index);
     });
-    const c = storyChapters[index];
-    storyCaption.textContent = c.label + (c.title ? ' — ' + c.title : '');
+    const c = view.chapters[index];
+    const book = isEditing() ? '' : (view.title + ' · ');
+    storyCaption.textContent = book + c.label + (c.dayTitle ? ' — ' + c.dayTitle : '');
   }
 
-  function inferTitle(text) {
-    const first = (text.split(/\n/)[0] || '').trim().replace(/^#+\s*/, '');
-    if (first && first.length <= 60 && first.length > 3) return first;
-    return MindGen.clean(text).split(' ').slice(0, 4).join(' ');
+  function updateUI() {
+    const editing = isEditing();
+    composeEl.style.display = editing ? '' : 'none';
+    $('#storyFinish').style.display = editing ? '' : 'none';
+    $('#storyViewing').hidden = editing;
+    const n = currentView() ? currentView().chapters.length : 0;
+    $('#storyCount').textContent = n + ' chapter' + (n === 1 ? '' : 's');
+    if (editing) $('#bookTitle').value = activeBook.title || '';
   }
 
-  // Add a chapter from YOUR source and grow the story.
-  function addChapter(value, title, kind) {
+  // Add a chapter to the ACTIVE storybook and grow the map.
+  function addChapter(value, kind) {
     kind = kind || 'text';
-    const label = 'Day ' + String(storyChapters.length + 1).padStart(2, '0');
-    const t = (title && title.trim())
-      ? title.trim()
-      : (kind === 'topic' ? MindGen.titleCase(value) : MindGen.titleCase(inferTitle(value)));
-    storyChapters.push({ label, title: t, value, kind });
+    const label = 'Day ' + String(activeBook.chapters.length + 1).padStart(2, '0');
+    const dayTitle = kind === 'topic' ? MindGen.titleCase(value) : MindGen.titleCase(inferTitle(value));
+    activeBook.chapters.push({ label, dayTitle, value, kind });
+    saveState();
     renderTimeline();
-    goToDay(storyChapters.length - 1);
+    goToDay(activeBook.chapters.length - 1);
+    updateUI();
+  }
+
+  function finishBook() {
+    if (viewingFinished != null) return;
+    if (!activeBook.chapters.length) { flash('Add at least one chapter before finishing.'); return; }
+    buildStoryUpTo(activeBook.chapters.length - 1);
+    const concepts = storyRoot ? countConcepts(storyRoot) : 0;
+    const title = MindGen.titleCase(activeBook.title || inferTitle(activeBook.chapters[0].value));
+    finishedBooks.unshift({
+      title, chapters: activeBook.chapters.slice(),
+      days: activeBook.chapters.length, concepts, finishedAt: Date.now()
+    });
+    activeBook = { title: '', chapters: [] };
+    saveState();
+    renderShelf();
+    $('#bookTitle').value = ''; $('#storyInput').value = '';
+    goToDay(-1); updateUI();
+    flash('Finished! “' + title + '” saved to your collection.');
+    $('#storyCollection').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function revisit(i) {
+    viewingExample = false;
+    viewingFinished = i;
+    renderTimeline();
+    goToDay(finishedBooks[i].chapters.length - 1);
+    updateUI();
+    document.getElementById('storybook').scrollIntoView({ behavior: 'smooth' });
+  }
+  function backToCurrent() {
+    viewingExample = false;
+    viewingFinished = null;
+    renderTimeline();
+    goToDay(activeBook.chapters.length ? activeBook.chapters.length - 1 : -1);
+    updateUI();
+  }
+
+  function renderShelf() {
+    const shelf = $('#storyShelf'), wrap = $('#storyCollection');
+    shelf.innerHTML = '';
+    if (!finishedBooks.length) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    $('#storyCollectionCount').textContent = finishedBooks.length + ' finished';
+    finishedBooks.forEach((bk, i) => {
+      const date = new Date(bk.finishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      const el = document.createElement('article');
+      el.className = 'book';
+      el.innerHTML =
+        '<div class="book__ribbon">✓ Completed</div>' +
+        '<h4 class="book__title">' + escapeHtml(bk.title) + '</h4>' +
+        '<div class="book__meta">' +
+          '<div class="book__metric"><b>' + bk.days + '</b><span>Chapters</span></div>' +
+          '<div class="book__metric"><b>' + bk.concepts + '</b><span>Concepts</span></div>' +
+        '</div>' +
+        '<div class="book__foot"><span class="book__date">' + date + '</span>' +
+          '<div class="book__actions">' +
+            '<button class="book__btn" data-revisit="' + i + '">Revisit →</button>' +
+            '<button class="book__btn book__del" data-del="' + i + '">Delete</button>' +
+          '</div></div>';
+      shelf.appendChild(el);
+    });
   }
 
   function loadExample(gotoIndex) {
-    storyChapters = Storybook.DAYS.map(d => ({ label: d.day, title: d.title, value: d.text, kind: 'text' }));
+    viewingFinished = null;
+    viewingExample = true;            // read-only — your saved draft is untouched
     renderTimeline();
-    goToDay(gotoIndex == null ? storyChapters.length - 1 : gotoIndex);
+    goToDay(gotoIndex == null ? exampleBook.chapters.length - 1 : gotoIndex);
+    updateUI();
   }
 
-  // Compose panel — the primary way to build your story
+  /* ---- Storybook events ---- */
   $('#storyAdd').addEventListener('click', () => {
+    if (!isEditing()) backToCurrent();
     const val = $('#storyInput').value.trim();
     if (val.length < 30) { flash('Add a bit more text (30+ characters).'); return; }
-    const seeded = storyChapters.length === 0;
-    addChapter(val, $('#storyTitle').value, 'text');
-    $('#storyInput').value = ''; $('#storyTitle').value = '';
-    flash(seeded ? 'Story seeded — add another chapter to grow it.'
-                 : 'Chapter ' + storyChapters.length + ' merged into your story.');
+    const bt = $('#bookTitle').value.trim();
+    if (bt) activeBook.title = bt;
+    const seeded = activeBook.chapters.length === 0;
+    addChapter(val, 'text');
+    $('#storyInput').value = '';
+    flash(seeded ? 'Storybook started — add another chapter as you keep reading.'
+                 : 'Chapter ' + activeBook.chapters.length + ' merged into your storybook.');
   });
 
-  $('#storyExample').addEventListener('click', () => { loadExample(); flash('Loaded a 5-chapter example story.'); });
-  $('#storyReset').addEventListener('click', () => { storyChapters = []; goToDay(-1); flash('Story reset — add your own resource.'); });
+  $('#storyFinish').addEventListener('click', finishBook);
+  $('#storyBackToCurrent').addEventListener('click', backToCurrent);
+  $('#storyExample').addEventListener('click', () => { loadExample(); flash('Loaded a 5-chapter example storybook.'); });
+  $('#storyReset').addEventListener('click', () => {
+    if (!isEditing()) { backToCurrent(); return; }
+    activeBook = { title: '', chapters: [] }; saveState();
+    $('#bookTitle').value = ''; $('#storyInput').value = '';
+    goToDay(-1); updateUI();
+    flash('Draft cleared.');
+  });
 
-  // Start on the empty prompt so the story is built from YOUR sources.
-  goToDay(-1);
+  $('#storyShelf').addEventListener('click', (e) => {
+    const rev = e.target.closest('[data-revisit]');
+    const del = e.target.closest('[data-del]');
+    if (rev) { revisit(+rev.dataset.revisit); }
+    else if (del) {
+      const i = +del.dataset.del;
+      finishedBooks.splice(i, 1); saveState(); renderShelf();
+      if (viewingFinished === i) backToCurrent();
+      else if (viewingFinished != null && viewingFinished > i) viewingFinished--;
+      flash('Removed from collection.');
+    }
+  });
+
+  // Restore any saved storybook + collection from this browser.
+  loadState();
+  renderShelf();
+  renderTimeline();
+  goToDay(activeBook.chapters.length ? activeBook.chapters.length - 1 : -1);
+  updateUI();
 
   /* =========================================================
      JOURNEY dashboard cards

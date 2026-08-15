@@ -267,9 +267,10 @@
         <span class="section-head__num">( 03 )</span>
         <h2 class="section-head__title reveal-lines">Storybook&nbsp;Mode</h2>
         <p class="section-head__lead reveal">
-          Don't build one static map. Build a growing visual story from
-          <em>your own</em> resources — add a chapter whenever you learn something,
-          and each one intelligently attaches to what you already know.
+          Keep one living storybook per book you're reading. Add a chapter from
+          <em>your own</em> resources each day — it attaches to what you already know
+          and is saved as you go. When you finish reading, archive it to your
+          collection and begin the next.
         </p>
       </div>
 
@@ -287,18 +288,33 @@
         </div>
         <div class="story__side">
           <div class="story__compose glass">
-            <h4>Add your chapter</h4>
-            <input type="text" id="storyTitle" class="gen__input" placeholder="Chapter title (optional)" />
-            <textarea id="storyInput" class="gen__textarea story__textarea" placeholder="Paste today's resource — notes, an article, a lesson, a story…"></textarea>
+            <div class="story__compose-head">
+              <h4>Your current storybook</h4>
+              <span class="story__count" id="storyCount">0 chapters</span>
+            </div>
+            <input type="text" id="bookTitle" class="gen__input" placeholder="What are you reading? (e.g. Sapiens)" />
+            <textarea id="storyInput" class="gen__textarea story__textarea" placeholder="Add today's reading — notes, a chapter summary, key ideas…"></textarea>
             <button class="btn btn--gold btn--block" id="storyAdd" data-magnetic>
-              <span>Add to my story</span>
+              <span>Add today's chapter</span>
               <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
             <div class="story__compose-actions">
-              <button id="storyExample" class="story__link">Load example story</button>
-              <button id="storyReset" class="story__link">Reset</button>
+              <button id="storyExample" class="story__link">Load example</button>
+              <button id="storyReset" class="story__link">Clear draft</button>
             </div>
           </div>
+
+          <button class="btn btn--ghost btn--block story__finish" id="storyFinish" data-magnetic>
+            <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            <span>Mark storybook as finished</span>
+          </button>
+
+          <!-- Shown while revisiting an archived storybook -->
+          <div class="story__viewing" id="storyViewing" hidden>
+            <span>Viewing a finished storybook.</span>
+            <button id="storyBackToCurrent">← Back to current</button>
+          </div>
+
           <div class="story__intel">
             <h4>How the AI grows your map</h4>
             <ul>
@@ -310,6 +326,15 @@
             </ul>
           </div>
         </div>
+      </div>
+
+      <!-- Finished storybooks collection -->
+      <div class="story__collection" id="storyCollection" hidden>
+        <div class="story__collection-head">
+          <h3>Finished Storybooks</h3>
+          <span id="storyCollectionCount"></span>
+        </div>
+        <div class="story__shelf" id="storyShelf"></div>
       </div>
     </section>
 

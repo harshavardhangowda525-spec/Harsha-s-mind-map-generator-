@@ -502,15 +502,55 @@ em { font-style: italic; }
 
 .story__side { display: flex; flex-direction: column; gap: 1rem; }
 .story__compose { padding: 1.5rem; display: flex; flex-direction: column; gap: .9rem; }
-.story__compose h4 { font-family: var(--serif); font-size: 1.3rem; font-weight: 500; }
-.story__textarea { min-height: 140px; }
+.story__compose-head { display: flex; align-items: baseline; justify-content: space-between; }
+.story__compose-head h4 { font-family: var(--serif); font-size: 1.3rem; font-weight: 500; }
+.story__count { font-family: var(--mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.story__textarea { min-height: 130px; }
 .story__compose-actions { display: flex; align-items: center; justify-content: space-between; }
 .story__link {
   font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase;
   color: var(--ink-mute); transition: color .3s;
 }
 .story__link:hover { color: var(--gold); }
+.story__finish svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.story__viewing {
+  display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+  padding: .9rem 1.1rem; border: 1px solid rgba(201,162,75,.35); border-radius: 12px;
+  background: rgba(201,162,75,.06); font-size: .82rem; color: var(--gold-soft);
+}
+.story__viewing button { font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
+.story__viewing button:hover { color: var(--gold); }
 .story__intel { background: var(--bg-3); border: 1px solid var(--line); border-radius: 16px; padding: 1.6rem; }
+
+/* Finished storybooks collection */
+.story__collection { max-width: 1400px; margin: 0 auto; padding: clamp(2.5rem,5vw,4rem) var(--pad) 0; }
+.story__collection-head { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.8rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
+.story__collection-head h3 { font-family: var(--serif); font-size: clamp(1.6rem,3vw,2.4rem); font-weight: 500; }
+.story__collection-head span { font-family: var(--mono); font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-mute); }
+.story__shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
+.book {
+  position: relative; background: var(--bg-3); border: 1px solid var(--line); border-radius: 16px;
+  padding: 1.6rem; padding-left: 1.9rem; overflow: hidden;
+  transition: transform .5s var(--ease), border-color .5s, background .5s;
+}
+.book::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+  background: linear-gradient(180deg, var(--gold-soft), var(--gold-deep));
+}
+.book:hover { transform: translateY(-5px); border-color: var(--line-2); background: var(--bg-2); }
+.book__ribbon { font-family: var(--mono); font-size: .64rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: .4rem; margin-bottom: .9rem; }
+.book__title { font-family: var(--serif); font-size: 1.45rem; font-weight: 500; line-height: 1.15; margin-bottom: 1rem; }
+.book__meta { display: flex; gap: 1.4rem; margin-bottom: 1.3rem; }
+.book__metric { display: flex; flex-direction: column; }
+.book__metric b { font-family: var(--mono); font-size: 1.15rem; color: var(--ink); }
+.book__metric span { font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-mute); }
+.book__foot { display: flex; align-items: center; justify-content: space-between; }
+.book__date { font-size: .72rem; color: var(--ink-mute); }
+.book__actions { display: flex; gap: .9rem; }
+.book__btn { font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); transition: gap .3s; }
+.book__btn:hover { color: var(--gold-soft); }
+.book__del { color: var(--ink-mute); }
+.book__del:hover { color: #d9744f; }
 .story__intel h4 { font-family: var(--serif); font-size: 1.3rem; font-weight: 500; margin-bottom: 1.2rem; }
 .story__intel ul { list-style: none; display: flex; flex-direction: column; gap: .9rem; }
 .story__intel li { display: flex; gap: .7rem; font-size: .88rem; color: var(--ink-soft); }

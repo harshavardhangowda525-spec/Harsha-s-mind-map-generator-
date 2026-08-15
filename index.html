@@ -267,8 +267,9 @@
         <span class="section-head__num">( 03 )</span>
         <h2 class="section-head__title reveal-lines">Storybook&nbsp;Mode</h2>
         <p class="section-head__lead reveal">
-          Don't build one static map. Build a growing visual story — one chapter
-          each day. New knowledge intelligently attaches to what you already know.
+          Don't build one static map. Build a growing visual story from
+          <em>your own</em> resources — add a chapter whenever you learn something,
+          and each one intelligently attaches to what you already know.
         </p>
       </div>
 
@@ -277,9 +278,27 @@
       <div class="story__stage">
         <div class="story__map glass">
           <svg id="storySvg"></svg>
-          <div class="story__caption" id="storyCaption">Day 01 — the seed of your story</div>
+          <div class="story__empty" id="storyEmpty">
+            <div class="gen__empty-orbit"><span></span><span></span><span></span></div>
+            <b>Begin your story</b>
+            <p>Add your first resource on the right to seed the map. Every chapter you add after that attaches to what's already here.</p>
+          </div>
+          <div class="story__caption" id="storyCaption"></div>
         </div>
         <div class="story__side">
+          <div class="story__compose glass">
+            <h4>Add your chapter</h4>
+            <input type="text" id="storyTitle" class="gen__input" placeholder="Chapter title (optional)" />
+            <textarea id="storyInput" class="gen__textarea story__textarea" placeholder="Paste today's resource — notes, an article, a lesson, a story…"></textarea>
+            <button class="btn btn--gold btn--block" id="storyAdd" data-magnetic>
+              <span>Add to my story</span>
+              <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <div class="story__compose-actions">
+              <button id="storyExample" class="story__link">Load example story</button>
+              <button id="storyReset" class="story__link">Reset</button>
+            </div>
+          </div>
           <div class="story__intel">
             <h4>How the AI grows your map</h4>
             <ul>
@@ -290,12 +309,6 @@
               <li><span>◇</span> Preserves the overall structure</li>
             </ul>
           </div>
-          <button class="btn btn--gold btn--block" id="storyNext" data-magnetic>
-            <span>Add the next day →</span>
-          </button>
-          <button class="btn btn--ghost btn--block" id="storyReset" data-magnetic>
-            <span>Reset story</span>
-          </button>
         </div>
       </div>
     </section>

@@ -467,17 +467,20 @@
   }
   $('#drawerClose').addEventListener('click', () => drawer.classList.remove('is-open'));
 
-  /* ---- Add as today's chapter (bridges to storybook) ---- */
+  /* ---- Add the Studio's current source as a Storybook chapter ---- */
   $('#addToStoryBtn').addEventListener('click', () => {
     const inp = activeInput();
-    if ((inp.type === 'topic' && !inp.value) || (inp.type === 'text' && inp.value.length < 30)) {
-      flash('Add a resource to append.'); return;
+    if (inp.type === 'topic') {
+      if (!inp.value) { flash('Enter a topic first.'); return; }
+      addChapter(inp.value, inp.value, 'topic');
+    } else {
+      if (!inp.value || inp.value.length < 30) { flash('Add a resource to append (30+ characters).'); return; }
+      addChapter(inp.value, '', 'text');
     }
-    const newMap = inp.type === 'topic' ? MindGen.fromTopic(inp.value) : MindGen.fromText(inp.value);
-    userStory.push(newMap);
-    flash('Added to your Storybook below ↓');
+    flash(storyChapters.length === 1
+      ? 'Story seeded from your resource — scroll down.'
+      : 'Added chapter ' + storyChapters.length + ' to your story.');
     document.getElementById('storybook').scrollIntoView({ behavior: 'smooth' });
-    renderUserStoryHint();
   });
 
   /* ---- toast ---- */
@@ -493,63 +496,103 @@
     clearTimeout(toast._t);
     toast._t = setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(-50%) translateY(20px)'; }, 2600);
   }
-  const userStory = [];
-  function renderUserStoryHint() {
-    if (storyCaption) storyCaption.textContent = 'Your Storybook now has ' + (Storybook.DAYS.length + userStory.length) + ' chapters';
+  /* =========================================================
+     STORYBOOK — user-provided chapters that grow one evolving map
+     ========================================================= */
+  const storySvg = $('#storySvg'), storyCaption = $('#storyCaption'), storyEmpty = $('#storyEmpty');
+  const storyMap = new MindMap(storySvg, { layout: 'radial', animate: !reduce, interactive: true, onSelect: openDrawer });
+  const timeline = $('#storyTimeline');
+
+  // Each chapter is a source YOU provide: { label, title, value, kind }
+  let storyChapters = [];
+  let storyRoot = null, storyDayIndex = -1;
+
+  function clearNew(node) { node.isNew = false; (node.children || []).forEach(clearNew); }
+
+  function mapFor(ch, isSeed) {
+    if (ch.kind === 'topic') return MindGen.fromTopic(ch.value);
+    return MindGen.fromText(ch.value, isSeed ? { title: ch.title } : undefined);
   }
 
-  /* =========================================================
-     STORYBOOK — timeline + evolving map
-     ========================================================= */
-  const storySvg = $('#storySvg'), storyCaption = $('#storyCaption');
-  const storyMap = new MindMap(storySvg, { layout: 'radial', animate: !reduce, interactive: true, onSelect: () => {} });
-  let storyRoot = null, storyDayIndex = 0;
-
-  const timeline = $('#storyTimeline');
-  Storybook.DAYS.forEach((d, i) => {
-    const el = document.createElement('div');
-    el.className = 'story__day';
-    el.dataset.index = i;
-    el.innerHTML = '<span class="story__day-dot"></span><span class="story__day-label">' + d.day + '</span>';
-    el.addEventListener('click', () => goToDay(i));
-    timeline.appendChild(el);
-  });
-
   function buildStoryUpTo(index) {
-    // Start fresh from day 0 and merge each subsequent day.
-    const first = MindGen.fromText(Storybook.DAYS[0].text, { title: 'Learning' });
-    storyRoot = first.root;
+    if (!storyChapters.length) { storyRoot = null; return; }
+    storyRoot = mapFor(storyChapters[0], true).root;
     for (let d = 1; d <= index; d++) {
-      const nm = MindGen.fromText(Storybook.DAYS[d].text);
-      MindGen.mergeIntoStory(storyRoot, nm, d);
+      clearNew(storyRoot);                          // only the latest chapter stays highlighted
+      MindGen.mergeIntoStory(storyRoot, mapFor(storyChapters[d], false), d);
     }
   }
 
+  function renderTimeline() {
+    timeline.innerHTML = '';
+    storyChapters.forEach((c, i) => {
+      const el = document.createElement('div');
+      el.className = 'story__day';
+      el.innerHTML = '<span class="story__day-dot"></span><span class="story__day-label">' + c.label + '</span>';
+      el.addEventListener('click', () => goToDay(i));
+      timeline.appendChild(el);
+    });
+  }
+
   function goToDay(index) {
+    if (index < 0 || !storyChapters.length) {
+      storyDayIndex = -1; storyRoot = null;
+      storyEmpty.hidden = false; storyCaption.textContent = '';
+      renderTimeline();
+      return;
+    }
     storyDayIndex = index;
     buildStoryUpTo(index);
+    storyEmpty.hidden = true;
     storyMap.setData(storyRoot);
     $$('.story__day').forEach((el, i) => {
       el.classList.toggle('is-active', i === index);
       el.classList.toggle('is-done', i < index);
     });
-    const d = Storybook.DAYS[index];
-    storyCaption.textContent = d.day + ' — ' + d.title;
+    const c = storyChapters[index];
+    storyCaption.textContent = c.label + (c.title ? ' — ' + c.title : '');
   }
 
-  $('#storyNext').addEventListener('click', () => {
-    const next = (storyDayIndex + 1) % Storybook.DAYS.length;
-    goToDay(next);
-  });
-  $('#storyReset').addEventListener('click', () => goToDay(0));
+  function inferTitle(text) {
+    const first = (text.split(/\n/)[0] || '').trim().replace(/^#+\s*/, '');
+    if (first && first.length <= 60 && first.length > 3) return first;
+    return MindGen.clean(text).split(' ').slice(0, 4).join(' ');
+  }
 
-  // Init storybook when scrolled into view (so fit() has real dimensions)
-  const storyInit = new IntersectionObserver((entries) => {
-    entries.forEach(en => {
-      if (en.isIntersecting) { goToDay(0); storyInit.disconnect(); }
-    });
-  }, { threshold: 0.2 });
-  storyInit.observe($('#storybook'));
+  // Add a chapter from YOUR source and grow the story.
+  function addChapter(value, title, kind) {
+    kind = kind || 'text';
+    const label = 'Day ' + String(storyChapters.length + 1).padStart(2, '0');
+    const t = (title && title.trim())
+      ? title.trim()
+      : (kind === 'topic' ? MindGen.titleCase(value) : MindGen.titleCase(inferTitle(value)));
+    storyChapters.push({ label, title: t, value, kind });
+    renderTimeline();
+    goToDay(storyChapters.length - 1);
+  }
+
+  function loadExample(gotoIndex) {
+    storyChapters = Storybook.DAYS.map(d => ({ label: d.day, title: d.title, value: d.text, kind: 'text' }));
+    renderTimeline();
+    goToDay(gotoIndex == null ? storyChapters.length - 1 : gotoIndex);
+  }
+
+  // Compose panel — the primary way to build your story
+  $('#storyAdd').addEventListener('click', () => {
+    const val = $('#storyInput').value.trim();
+    if (val.length < 30) { flash('Add a bit more text (30+ characters).'); return; }
+    const seeded = storyChapters.length === 0;
+    addChapter(val, $('#storyTitle').value, 'text');
+    $('#storyInput').value = ''; $('#storyTitle').value = '';
+    flash(seeded ? 'Story seeded — add another chapter to grow it.'
+                 : 'Chapter ' + storyChapters.length + ' merged into your story.');
+  });
+
+  $('#storyExample').addEventListener('click', () => { loadExample(); flash('Loaded a 5-chapter example story.'); });
+  $('#storyReset').addEventListener('click', () => { storyChapters = []; goToDay(-1); flash('Story reset — add your own resource.'); });
+
+  // Start on the empty prompt so the story is built from YOUR sources.
+  goToDay(-1);
 
   /* =========================================================
      JOURNEY dashboard cards
@@ -576,8 +619,10 @@
   grid.addEventListener('click', (e) => {
     const btn = e.target.closest('.jcard__btn');
     if (!btn) return;
-    goToDay(+btn.dataset.day);
+    // Journey cards showcase the example journey — load it and jump to that day.
+    loadExample(+btn.dataset.day);
     document.getElementById('storybook').scrollIntoView({ behavior: 'smooth' });
+    flash('Opened the example journey.');
   });
 
   // Refit maps on resize

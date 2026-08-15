@@ -43,7 +43,15 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   cursor: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
+#app { flex: 1 0 auto; }
+
+/* Multi-page router: each nav item opens as its own page.
+   Non-hero pages get top room so headers clear the fixed nav. */
+#generator, #storybook, #journey, #features { padding-top: clamp(6.5rem, 9vw, 9rem); }
 
 @media (max-width: 900px) { body { cursor: auto; } }
 
@@ -158,8 +166,8 @@ em { font-style: italic; }
   content:''; position:absolute; left:0; bottom:-6px; width:0; height:1px; background: var(--gold);
   transition: width .35s var(--ease);
 }
-.nav__link:hover { color: var(--ink); }
-.nav__link:hover::after { width: 100%; }
+.nav__link:hover, .nav__link.is-active { color: var(--ink); }
+.nav__link:hover::after, .nav__link.is-active::after { width: 100%; }
 .nav__cta {
   font-family: var(--mono); font-size: .74rem; letter-spacing: .14em; text-transform: uppercase;
   padding: .72rem 1.5rem; border: 1px solid var(--line-2); border-radius: 40px;
@@ -502,9 +510,9 @@ em { font-style: italic; }
 
 .story__side { display: flex; flex-direction: column; gap: 1rem; }
 .story__compose { padding: 1.5rem; display: flex; flex-direction: column; gap: .9rem; }
-.story__compose-head { display: flex; align-items: baseline; justify-content: space-between; }
+.story__compose-head { display: flex; align-items: baseline; justify-content: space-between; gap: .8rem; }
 .story__compose-head h4 { font-family: var(--serif); font-size: 1.3rem; font-weight: 500; }
-.story__count { font-family: var(--mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); }
+.story__count { font-family: var(--mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); white-space: nowrap; }
 .story__textarea { min-height: 130px; }
 .story__compose-actions { display: flex; align-items: center; justify-content: space-between; }
 .story__link {

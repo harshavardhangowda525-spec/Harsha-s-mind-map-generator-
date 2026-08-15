@@ -109,6 +109,59 @@
   });
 
   /* ---------------------------------------------------------
+     Page router — each nav item opens as its own page
+  --------------------------------------------------------- */
+  const PAGES = ['home', 'generator', 'storybook', 'journey', 'features', 'about'];
+  const navLinks = $$('[data-nav]');
+  let currentPage = null;
+
+  function onPageShown(name) {
+    onScroll();
+    if (name === 'generator' && currentMap) requestAnimationFrame(() => map.fit());
+    if (name === 'storybook' && storyRoot) requestAnimationFrame(() => storyMap.fit());
+  }
+
+  function showPage(name) {
+    if (!PAGES.includes(name)) name = 'home';
+    document.querySelectorAll('#app > [data-page]').forEach(el => {
+      el.style.display = (el.getAttribute('data-page') === name) ? '' : 'none';
+    });
+    navLinks.forEach(a => a.classList.toggle('is-active', a.dataset.nav === name));
+    currentPage = name;
+    window.scrollTo(0, 0);
+    onPageShown(name);
+  }
+
+  function navigate(name) {
+    if ((location.hash.slice(1) || 'home') === name) showPage(name);
+    else location.hash = name;            // triggers hashchange -> showPage
+  }
+
+  document.addEventListener('click', (e) => {
+    const nav = e.target.closest('[data-nav]');
+    if (nav) {
+      e.preventDefault();
+      navigate(nav.dataset.nav);
+      nav.classList.remove('is-open');
+      document.getElementById('nav').classList.remove('is-open');
+      document.getElementById('mobileMenu').classList.remove('is-open');
+      document.body.style.overflow = '';
+      return;
+    }
+    const scr = e.target.closest('[data-scroll]');
+    if (scr) {
+      e.preventDefault();
+      const t = document.getElementById(scr.dataset.scroll);
+      if (t) t.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  window.addEventListener('hashchange', () => {
+    const name = location.hash.slice(1);
+    if (PAGES.includes(name)) showPage(name);
+  });
+
+  /* ---------------------------------------------------------
      Count-up stats
   --------------------------------------------------------- */
   const statObserver = new IntersectionObserver((entries) => {
@@ -480,9 +533,9 @@
       addChapter(inp.value, 'text');
     }
     flash(activeBook.chapters.length === 1
-      ? 'Storybook started from your resource — scroll down.'
+      ? 'Storybook started from your resource.'
       : 'Added chapter ' + activeBook.chapters.length + ' to your storybook.');
-    document.getElementById('storybook').scrollIntoView({ behavior: 'smooth' });
+    navigate('storybook');
   });
 
   /* ---- toast ---- */
@@ -639,7 +692,7 @@
     renderTimeline();
     goToDay(finishedBooks[i].chapters.length - 1);
     updateUI();
-    document.getElementById('storybook').scrollIntoView({ behavior: 'smooth' });
+    navigate('storybook');
   }
   function backToCurrent() {
     viewingExample = false;
@@ -755,15 +808,23 @@
     if (!btn) return;
     // Journey cards showcase the example journey — load it and jump to that day.
     loadExample(+btn.dataset.day);
-    document.getElementById('storybook').scrollIntoView({ behavior: 'smooth' });
+    navigate('storybook');
     flash('Opened the example journey.');
   });
 
-  // Refit maps on resize
+  // Refit the visible page's map on resize
   let rT;
   window.addEventListener('resize', () => {
     clearTimeout(rT);
-    rT = setTimeout(() => { if (currentMap) map.fit(); if (storyRoot) storyMap.fit(); }, 200);
+    rT = setTimeout(() => {
+      if (currentPage === 'generator' && currentMap) map.fit();
+      if (currentPage === 'storybook' && storyRoot) storyMap.fit();
+    }, 200);
   });
+
+  /* ---------------------------------------------------------
+     Open the initial page (from the URL, else Home)
+  --------------------------------------------------------- */
+  showPage(PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home');
 
 })();

@@ -629,6 +629,7 @@
     const view = currentView();
     if (index < 0 || !view || !view.chapters.length) {
       storyRoot = null;
+      storyMap.clear();                 // wipe any previously rendered nodes
       storyEmpty.hidden = false; storyCaption.textContent = '';
       renderTimeline();
       return;

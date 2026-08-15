@@ -59,6 +59,13 @@
     this.render(true);
   };
 
+  MindMap.prototype.clear = function () {
+    this.root = null;
+    this._positions = {};
+    this.gLinks.innerHTML = '';
+    this.gNodes.innerHTML = '';
+  };
+
   MindMap.prototype.setLayout = function (layout) {
     this.layout = layout;
     this.render(true);

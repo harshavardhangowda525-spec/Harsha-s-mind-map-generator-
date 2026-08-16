@@ -455,7 +455,7 @@
   });
 
   // Toolbar actions
-  $$('.tool').forEach(btn => btn.addEventListener('click', () => {
+  $$('.gen__toolbar .tool').forEach(btn => btn.addEventListener('click', () => {
     const action = btn.dataset.action;
     if (!currentMap && action !== 'regenerate') { flash('Generate a map first.'); return; }
     switch (action) {
@@ -587,6 +587,7 @@
   let viewingFinished = null;                       // index into finishedBooks, or null
   let viewingExample = false;                       // read-only demo view
   let storyRoot = null;
+  let storyIndex = -1;                              // currently shown day index
 
   // Read-only example storybook (never persisted, never clobbers your draft)
   const exampleBook = { title: 'Learning', chapters: Storybook.DAYS.map(d => ({ label: d.day, dayTitle: d.title, value: d.text, kind: 'text' })) };
@@ -647,12 +648,13 @@
   function goToDay(index) {
     const view = currentView();
     if (index < 0 || !view || !view.chapters.length) {
-      storyRoot = null;
+      storyRoot = null; storyIndex = -1;
       storyMap.clear();                 // wipe any previously rendered nodes
       storyEmpty.hidden = false; storyCaption.textContent = '';
       renderTimeline();
       return;
     }
+    storyIndex = index;
     buildStoryUpTo(index);
     storyEmpty.hidden = true;
     storyMap.setData(storyRoot);
@@ -756,6 +758,62 @@
     updateUI();
   }
 
+  /* ---- Storybook map toolbar (same tools as the Studio, on the story map) ---- */
+  function storySummarize() {
+    if (!storyRoot) return;
+    const branches = storyRoot.children.map(b => b.label);
+    openDrawer({
+      kind: 'root', label: 'Summary — ' + storyRoot.label,
+      note: 'Your storybook “' + storyRoot.label + '” spans ' + countConcepts(storyRoot) +
+        ' concepts across ' + branches.length + ' branches: ' + branches.join(', ') + '.',
+      _tags: branches.slice(0, 6)
+    });
+  }
+  function storyExplain() {
+    const id = storyMap.selectedId;
+    if (!id) { flash('Click a node in the story, then press Explain.'); return; }
+    const node = storyMap._findNode(id);
+    if (!node) return;
+    const kids = (node.children || []).map(c => c.label);
+    openDrawer({
+      kind: node.kind, label: node.label,
+      note: (node.note || node.label) + (kids.length ? '\n\nRelated ideas: ' + kids.join(', ') + '.' : ''),
+      _tags: kids.slice(0, 6)
+    });
+  }
+  function storyExport() {
+    if (!storyRoot) { flash('Add a chapter first.'); return; }
+    storyMap.exportPNG((url) => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (storyRoot.label || 'storybook').replace(/\s+/g, '-').toLowerCase() + '.png';
+      a.click();
+      flash('Exported as PNG.');
+    });
+  }
+  function storySaveMap() {
+    if (!storyRoot) { flash('Add a chapter first.'); return; }
+    try {
+      const saved = JSON.parse(localStorage.getItem('mindmap.saved') || '[]');
+      saved.push({ at: Date.now(), title: storyRoot.label, root: storyRoot, meta: { concepts: countConcepts(storyRoot) } });
+      localStorage.setItem('mindmap.saved', JSON.stringify(saved.slice(-20)));
+      flash('Story map saved to this browser.');
+    } catch (e) { flash('Could not save.'); }
+  }
+  $$('.story__toolbar .tool').forEach(btn => btn.addEventListener('click', () => {
+    const action = btn.dataset.action;
+    if (!storyRoot && action !== 'regenerate') { flash('Add a chapter to your story first.'); return; }
+    switch (action) {
+      case 'regenerate': if (storyIndex >= 0) { goToDay(storyIndex); flash('Re-rendered.'); } else flash('Add a chapter first.'); break;
+      case 'expand': storyMap.expandAll(); flash('Expanded all branches.'); break;
+      case 'summarize': storySummarize(); break;
+      case 'explain': storyExplain(); break;
+      case 'layout': { const l = storyMap.cycleLayout(); flash('Layout: ' + l); break; }
+      case 'export': storyExport(); break;
+      case 'save': storySaveMap(); break;
+    }
+  }));
+
   /* ---- Storybook events ---- */
   $('#storyAdd').addEventListener('click', () => {
     if (!isEditing()) backToCurrent();
@@ -828,19 +886,15 @@
   const storyAddBtn = $('#storyAdd');
   if (storyAddBtn) storyAddBtn.addEventListener('click', () => { lsSet(SD.text, ''); });
 
-  // Clear ALL saved data on this device and reset the app.
+  // Studio "Clear draft" — mirrors the Storybook's Clear draft, scoped to the
+  // Studio: removes the saved map + typed source, and resets the Studio only.
   const clearBtn = $('#clearSavedBtn');
   if (clearBtn) clearBtn.addEventListener('click', () => {
-    if (!confirm('Clear all saved data on this device? Your generated map, storybook chapters, finished books, and drafts will be removed.')) return;
-    try { Object.keys(localStorage).filter(k => k.indexOf('mindmap.') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
-    // Reset the Studio
+    if (!confirm('Clear the Studio draft? Your generated map and typed text on this device will be removed.')) return;
+    try { [SK.map, SK.text, SK.topic].forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
     currentMap = null; map.clear(); mapEmpty.hidden = false;
     sourceText.value = ''; charCount.textContent = '0 characters'; topicInput.value = '';
-    // Reset the Storybook
-    activeBook = { title: '', chapters: [] }; finishedBooks = []; viewingFinished = null; viewingExample = false;
-    if (bookTitleEl) bookTitleEl.value = ''; if (storyInputEl) storyInputEl.value = '';
-    renderShelf(); renderTimeline(); goToDay(-1); updateUI();
-    flash('Saved data cleared.');
+    flash('Studio draft cleared.');
   });
 
   /* =========================================================

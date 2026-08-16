@@ -211,7 +211,7 @@
             <p class="gen__addstory-note">Grows your Storybook instead of starting fresh.</p>
           </div>
 
-          <button class="gen__clear" id="clearSavedBtn">Clear saved data</button>
+          <button class="gen__clear" id="clearSavedBtn">Clear draft</button>
         </aside>
 
         <!-- Map canvas -->
@@ -281,13 +281,28 @@
 
       <div class="story__stage">
         <div class="story__map glass">
-          <svg id="storySvg"></svg>
-          <div class="story__empty" id="storyEmpty">
-            <div class="gen__empty-orbit"><span></span><span></span><span></span></div>
-            <b>Begin your story</b>
-            <p>Add your first resource on the right to seed the map. Every chapter you add after that attaches to what's already here.</p>
+          <div class="story__toolbar">
+            <div class="gen__toolbar-group">
+              <button class="tool" data-action="regenerate" title="Re-render">↻ <span>Regenerate</span></button>
+              <button class="tool" data-action="expand" title="Expand all">⊕ <span>Expand</span></button>
+              <button class="tool" data-action="summarize" title="Summarize">≡ <span>Summarize</span></button>
+              <button class="tool" data-action="explain" title="Explain node">✦ <span>Explain</span></button>
+            </div>
+            <div class="gen__toolbar-group">
+              <button class="tool" data-action="layout" title="Change layout">◇ <span>Layout</span></button>
+              <button class="tool" data-action="export" title="Export as image">↧ <span>Export</span></button>
+              <button class="tool" data-action="save" title="Save">◈ <span>Save</span></button>
+            </div>
           </div>
-          <div class="story__caption" id="storyCaption"></div>
+          <div class="story__viewport">
+            <svg id="storySvg"></svg>
+            <div class="story__empty" id="storyEmpty">
+              <div class="gen__empty-orbit"><span></span><span></span><span></span></div>
+              <b>Begin your story</b>
+              <p>Add your first resource on the right to seed the map. Every chapter you add after that attaches to what's already here.</p>
+            </div>
+            <div class="story__caption" id="storyCaption"></div>
+          </div>
         </div>
         <div class="story__side">
           <div class="story__compose glass">

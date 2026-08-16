@@ -828,6 +828,21 @@
   const storyAddBtn = $('#storyAdd');
   if (storyAddBtn) storyAddBtn.addEventListener('click', () => { lsSet(SD.text, ''); });
 
+  // Clear ALL saved data on this device and reset the app.
+  const clearBtn = $('#clearSavedBtn');
+  if (clearBtn) clearBtn.addEventListener('click', () => {
+    if (!confirm('Clear all saved data on this device? Your generated map, storybook chapters, finished books, and drafts will be removed.')) return;
+    try { Object.keys(localStorage).filter(k => k.indexOf('mindmap.') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) { /* ignore */ }
+    // Reset the Studio
+    currentMap = null; map.clear(); mapEmpty.hidden = false;
+    sourceText.value = ''; charCount.textContent = '0 characters'; topicInput.value = '';
+    // Reset the Storybook
+    activeBook = { title: '', chapters: [] }; finishedBooks = []; viewingFinished = null; viewingExample = false;
+    if (bookTitleEl) bookTitleEl.value = ''; if (storyInputEl) storyInputEl.value = '';
+    renderShelf(); renderTimeline(); goToDay(-1); updateUI();
+    flash('Saved data cleared.');
+  });
+
   /* =========================================================
      JOURNEY dashboard cards
      ========================================================= */

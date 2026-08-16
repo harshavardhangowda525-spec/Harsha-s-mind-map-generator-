@@ -386,6 +386,11 @@ em { font-style: italic; }
 
 .gen__addstory { border-top: 1px solid var(--line); padding-top: 1.2rem; }
 .gen__addstory-note { font-size: .72rem; color: var(--ink-mute); text-align: center; margin-top: .7rem; }
+.gen__clear {
+  align-self: center; font-family: var(--mono); font-size: .7rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-mute); padding: .5rem .2rem; transition: color .3s;
+}
+.gen__clear:hover { color: #d9744f; }
 
 /* Stage */
 .gen__stage { position: relative; display: flex; flex-direction: column; min-height: 620px; overflow: hidden; }

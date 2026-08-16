@@ -124,6 +124,26 @@ Copy `.env.example` and set:
 If the site is hosted separately from the API, set `window.MINDMAP_API_BASE`
 to the backend URL before `js/auth.js` loads.
 
+### Deploy the full app (accounts need a server)
+
+> **Important:** GitHub Pages and other static hosts can't run the backend, so
+> sign-up / login won't work there — you'll see "Couldn't reach the accounts
+> server." Deploy the Node app (which serves the frontend *and* the API from one
+> origin) to any Node host:
+
+- **Render** — `render.yaml` is included. In Render: **New → Blueprint**, pick this
+  repo, set `APP_URL` to your Render URL (and the `SMTP_*` vars for real emails).
+- **Docker** — a `Dockerfile` is included:
+  ```bash
+  docker build -t mindmap .
+  docker run -p 3000:3000 -e JWT_SECRET=$(openssl rand -hex 32) \
+    -e APP_URL=http://localhost:3000 -v mindmap_data:/app/data mindmap
+  ```
+- **Railway / Fly.io / a VPS** — set the env vars from `.env.example` and run
+  `npm start`.
+
+Once deployed, use the deployed URL (not the static Pages URL) so accounts work.
+
 ## ✦ Try it
 
 1. Go to **The Studio**, click **Load a sample resource**, then **Generate Mind Map**.

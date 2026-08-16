@@ -1,0 +1,41 @@
+# One-click deploy to Render (https://render.com) — serves the frontend AND the
+# auth API from a single Node service. In the Render dashboard: New → Blueprint,
+# point it at this repo, then fill in the "sync: false" secrets below.
+services:
+  - type: web
+    name: mindmap
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    # A persistent disk keeps the SQLite database across restarts/deploys.
+    # (Disks require a paid instance type; on the free plan data is ephemeral.)
+    disk:
+      name: mindmap-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true          # Render generates a strong secret
+      - key: DATABASE_FILE
+        value: /var/data/mindmap.db
+      # Set APP_URL to your Render URL, e.g. https://mindmap.onrender.com
+      - key: APP_URL
+        sync: false
+      # Email service (verification + reset). Fill these in for real emails;
+      # leave blank to log links to the service console instead.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false

@@ -20,18 +20,21 @@
       body: opts.body ? JSON.stringify(opts.body) : undefined
     });
     let data = null;
-    try { data = await res.json(); } catch (e) { /* non-JSON */ }
+    try { data = await res.json(); } catch (e) { /* non-JSON (e.g. a static-host 404 page) */ }
     if (!res.ok) {
       const err = new Error((data && data.error && data.error.message) || 'Request failed');
-      err.code = data && data.error && data.error.code;
+      // No JSON body on an error usually means there's no API here at all
+      // (the page is on static hosting without the backend running).
+      err.code = (data && data.error && data.error.code) || (data ? 'HTTP_' + res.status : 'NO_BACKEND');
       err.status = res.status;
       err.data = data;
       throw err;
     }
     return data;
   }
-  const isNetErr = (e) => (e instanceof TypeError) || /fetch/i.test(e.message || '');
-  const friendly = (e) => isNetErr(e) ? 'Could not reach the server. Is the backend running?' : (e.message || 'Something went wrong.');
+  const isNetErr = (e) => (e instanceof TypeError) || e.code === 'NO_BACKEND' || /fetch/i.test(e.message || '');
+  const NO_BACKEND_MSG = "Couldn't reach the accounts server. Sign-up and login need the backend running — they don't work on static hosting like GitHub Pages or an opened file. Run “npm start” and open the site at that address, or deploy the server (see the README).";
+  const friendly = (e) => isNetErr(e) ? NO_BACKEND_MSG : (e.message || 'Something went wrong.');
 
   /* ---------- small helpers ---------- */
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

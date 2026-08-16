@@ -1,4 +1,7 @@
 node_modules/
 scratchpad/
+data/
+.env
+.env.local
 *.log
 .DS_Store

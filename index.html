@@ -51,6 +51,7 @@
     <a href="#generator" class="nav__cta" data-nav="generator" data-magnetic>
       <span>Generate</span>
     </a>
+    <div class="nav__auth" id="navAuth"><!-- populated by auth.js --></div>
     <button class="nav__burger" id="burger" aria-label="Menu">
       <span></span><span></span>
     </button>
@@ -63,6 +64,7 @@
     <a href="#journey" class="mobile-menu__link" data-nav="journey">Journey</a>
     <a href="#features" class="mobile-menu__link" data-nav="features">Features</a>
     <a href="#about" class="mobile-menu__link" data-nav="about">About</a>
+    <div class="mobile-menu__auth" id="mobileAuth"><!-- populated by auth.js --></div>
   </div>
 
   <main id="app">
@@ -440,6 +442,144 @@
         </a>
       </div>
     </section>
+
+    <!-- ============ AUTH — LOG IN ============ -->
+    <section class="auth page" id="login" data-page="login">
+      <div class="auth__card glass">
+        <span class="auth__kicker">Welcome back</span>
+        <h2 class="auth__title">Log in</h2>
+        <p class="auth__lead">Access your saved mind maps and knowledge story.</p>
+        <form class="auth__form" id="loginForm" novalidate autocomplete="on">
+          <label class="field"><span>Email address</span>
+            <input type="email" id="loginEmail" autocomplete="email" placeholder="you@email.com" required />
+          </label>
+          <label class="field"><span>Password</span>
+            <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••" required />
+          </label>
+          <div class="auth__row"><a class="auth__link" href="#forgot" data-nav="forgot">Forgot password?</a></div>
+          <p class="auth__error" id="loginError" hidden></p>
+          <button class="btn btn--gold btn--block" type="submit"><span>Log In</span></button>
+        </form>
+        <p class="auth__alt">Don't have an account? <a href="#signup" data-nav="signup">Sign Up</a></p>
+      </div>
+    </section>
+
+    <!-- ============ AUTH — SIGN UP ============ -->
+    <section class="auth page" id="signup" data-page="signup">
+      <div class="auth__card glass">
+        <span class="auth__kicker">Get started</span>
+        <h2 class="auth__title">Create your account</h2>
+        <p class="auth__lead">Build a knowledge story that follows you everywhere.</p>
+        <form class="auth__form" id="signupForm" novalidate autocomplete="on">
+          <label class="field"><span>Name</span>
+            <input type="text" id="signupName" autocomplete="name" placeholder="Ada Lovelace" required />
+          </label>
+          <label class="field"><span>Email address</span>
+            <input type="email" id="signupEmail" autocomplete="email" placeholder="you@email.com" required />
+          </label>
+          <label class="field"><span>Password</span>
+            <input type="password" id="signupPassword" autocomplete="new-password" placeholder="At least 8 characters" required />
+          </label>
+          <label class="field"><span>Confirm password</span>
+            <input type="password" id="signupConfirm" autocomplete="new-password" placeholder="Re-enter your password" required />
+          </label>
+          <p class="auth__error" id="signupError" hidden></p>
+          <button class="btn btn--gold btn--block" type="submit"><span>Create Account</span></button>
+        </form>
+        <p class="auth__alt">Already have an account? <a href="#login" data-nav="login">Log In</a></p>
+      </div>
+    </section>
+
+    <!-- ============ AUTH — VERIFY EMAIL ============ -->
+    <section class="auth page" id="verify" data-page="verify">
+      <div class="auth__card auth__card--center glass">
+        <div class="auth__mail">
+          <svg viewBox="0 0 48 48"><rect x="6" y="11" width="36" height="26" rx="3"/><path d="M7 13l17 13L41 13"/></svg>
+        </div>
+        <h2 class="auth__title">Verify Your Email</h2>
+        <p class="auth__lead">We've sent a verification link to</p>
+        <p class="auth__email" id="verifyEmail">your@email.com</p>
+        <p class="auth__lead">Open your Gmail / email inbox and click the link to activate your account. You'll land straight on your dashboard.</p>
+        <div class="auth__dev" id="verifyDev" hidden>
+          <span>Dev mode — no email sent. Verify with this link:</span>
+          <a id="verifyDevLink" href="#">Open verification link</a>
+        </div>
+        <p class="auth__error" id="verifyError" hidden></p>
+        <button class="btn btn--gold btn--block" id="resendBtn"><span>Resend Verification Email</span></button>
+        <p class="auth__alt"><a href="#login" data-nav="login">Back to Log In</a></p>
+      </div>
+    </section>
+
+    <!-- ============ AUTH — FORGOT PASSWORD ============ -->
+    <section class="auth page" id="forgot" data-page="forgot">
+      <div class="auth__card glass">
+        <span class="auth__kicker">No worries</span>
+        <h2 class="auth__title">Reset your password</h2>
+        <p class="auth__lead">Enter your email and we'll send you a link to choose a new password.</p>
+        <form class="auth__form" id="forgotForm" novalidate>
+          <label class="field"><span>Email address</span>
+            <input type="email" id="forgotEmail" autocomplete="email" placeholder="you@email.com" required />
+          </label>
+          <p class="auth__error" id="forgotError" hidden></p>
+          <p class="auth__success" id="forgotSuccess" hidden></p>
+          <div class="auth__dev" id="forgotDev" hidden>
+            <span>Dev mode — reset link:</span><a id="forgotDevLink" href="#">Open reset link</a>
+          </div>
+          <button class="btn btn--gold btn--block" type="submit"><span>Send reset link</span></button>
+        </form>
+        <p class="auth__alt"><a href="#login" data-nav="login">Back to Log In</a></p>
+      </div>
+    </section>
+
+    <!-- ============ AUTH — RESET PASSWORD ============ -->
+    <section class="auth page" id="reset" data-page="reset">
+      <div class="auth__card glass">
+        <span class="auth__kicker">Almost done</span>
+        <h2 class="auth__title">Choose a new password</h2>
+        <p class="auth__lead">Enter a new password for your account.</p>
+        <form class="auth__form" id="resetForm" novalidate>
+          <label class="field"><span>New password</span>
+            <input type="password" id="resetPassword" autocomplete="new-password" placeholder="At least 8 characters" required />
+          </label>
+          <label class="field"><span>Confirm new password</span>
+            <input type="password" id="resetConfirm" autocomplete="new-password" placeholder="Re-enter your password" required />
+          </label>
+          <p class="auth__error" id="resetError" hidden></p>
+          <p class="auth__success" id="resetSuccess" hidden></p>
+          <button class="btn btn--gold btn--block" type="submit"><span>Update password</span></button>
+        </form>
+        <p class="auth__alt"><a href="#login" data-nav="login">Back to Log In</a></p>
+      </div>
+    </section>
+
+    <!-- ============ ACCOUNT / MY MAPS ============ -->
+    <section class="account page" id="account" data-page="account">
+      <div class="section-head">
+        <span class="section-head__num">( YOUR ACCOUNT )</span>
+        <h2 class="section-head__title">Your&nbsp;Account</h2>
+      </div>
+      <div class="account__layout">
+        <aside class="account__profile glass">
+          <div class="account__avatar" id="accountAvatar">A</div>
+          <h3 class="account__name" id="accountName">—</h3>
+          <p class="account__email" id="accountEmail">—</p>
+          <span class="account__badge" id="accountBadge">Verified</span>
+          <button class="btn btn--ghost btn--block" id="logoutBtn"><span>Log Out</span></button>
+        </aside>
+        <div class="account__maps">
+          <div class="account__maps-head">
+            <h3>Your saved mind maps</h3>
+            <span id="myMapsCount"></span>
+          </div>
+          <div class="account__maps-list" id="myMapsList"></div>
+          <div class="account__empty" id="myMapsEmpty" hidden>
+            <b>No saved maps yet</b>
+            <p>Generate a map in the Studio and press <em>Save</em> to keep it on your account.</p>
+            <a class="btn btn--gold" href="#generator" data-nav="generator"><span>Open the Studio</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
@@ -464,5 +604,6 @@
   <script src="js/mindmap.js"></script>
   <script src="js/storybook.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
 </body>
 </html>

@@ -111,7 +111,8 @@
   /* ---------------------------------------------------------
      Page router — each nav item opens as its own page
   --------------------------------------------------------- */
-  const PAGES = ['home', 'generator', 'storybook', 'journey', 'features', 'about'];
+  const PAGES = ['home', 'generator', 'storybook', 'journey', 'features', 'about',
+    'login', 'signup', 'verify', 'forgot', 'reset', 'account'];
   const navLinks = $$('[data-nav]');
   let currentPage = null;
 
@@ -119,6 +120,7 @@
     onScroll();
     if (name === 'generator' && currentMap) requestAnimationFrame(() => map.fit());
     if (name === 'storybook' && storyRoot) requestAnimationFrame(() => storyMap.fit());
+    if (name === 'account' && window.MindMapAuth) window.MindMapAuth.onAccountShown();
   }
 
   function showPage(name) {
@@ -499,12 +501,18 @@
   }
 
   function saveMap() {
-    if (!currentMap) return;
+    if (!currentMap) { flash('Generate a map first.'); return; }
+    // Signed in → save to the user's account (backend). auth.js handles it.
+    if (window.MindMapAuth && window.MindMapAuth.isAuthed()) {
+      window.MindMapAuth.saveMap(currentMap);
+      return;
+    }
+    // Guest → keep a local copy and invite them to sign in.
     try {
       const saved = JSON.parse(localStorage.getItem('mindmap.saved') || '[]');
       saved.push({ at: Date.now(), title: currentMap.root.label, root: currentMap.root, meta: currentMap.meta });
       localStorage.setItem('mindmap.saved', JSON.stringify(saved.slice(-20)));
-      flash('Saved to this browser (' + saved.length + ' total).');
+      flash('Saved on this device — sign in to save to your account.');
     } catch (e) { flash('Could not save.'); }
   }
 
@@ -822,6 +830,24 @@
       if (currentPage === 'storybook' && storyRoot) storyMap.fit();
     }, 200);
   });
+
+  /* ---------------------------------------------------------
+     Bridge for auth.js (nav routing, toasts, map load/save)
+  --------------------------------------------------------- */
+  window.MindMapApp = {
+    navigate,
+    showPage,
+    flash,
+    getCurrentMap: () => currentMap,
+    loadMap: (data, title) => {
+      if (!data || !data.root) return;
+      currentMap = data;
+      mapEmpty.hidden = true;
+      map.setData(data.root);
+      navigate('generator');
+      flash('Loaded “' + (title || data.root.label) + '”.');
+    }
+  };
 
   /* ---------------------------------------------------------
      Open the initial page (from the URL, else Home)

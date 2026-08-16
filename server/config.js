@@ -16,7 +16,8 @@ const config = {
   port,
 
   // Public base URL used to build links inside verification / reset emails.
-  appUrl: (process.env.APP_URL || `http://localhost:${port}`).replace(/\/+$/, ''),
+  // Falls back to Render's auto-provided URL so links work without extra config.
+  appUrl: (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`).replace(/\/+$/, ''),
 
   // Authentication provider (self-hosted JWT sessions in httpOnly cookies).
   jwtSecret: process.env.JWT_SECRET || 'dev-only-insecure-secret-change-me',

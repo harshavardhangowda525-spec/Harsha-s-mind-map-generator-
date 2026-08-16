@@ -111,7 +111,8 @@
   /* ---------------------------------------------------------
      Page router — each nav item opens as its own page
   --------------------------------------------------------- */
-  const PAGES = ['home', 'generator', 'storybook', 'journey', 'features', 'about'];
+  const PAGES = ['home', 'generator', 'storybook', 'journey', 'features', 'about',
+    'login', 'signup', 'verify', 'forgot', 'reset', 'profile', 'settings', 'admin'];
   const navLinks = $$('[data-nav]');
   let currentPage = null;
 
@@ -119,10 +120,20 @@
     onScroll();
     if (name === 'generator' && currentMap) requestAnimationFrame(() => map.fit());
     if (name === 'storybook' && storyRoot) requestAnimationFrame(() => storyMap.fit());
+    if (window.MindMapAuth && window.MindMapAuth.onPageShown) window.MindMapAuth.onPageShown(name);
+  }
+
+  function hideAllPages() {
+    document.querySelectorAll('#app > [data-page]').forEach(el => { el.style.display = 'none'; });
   }
 
   function showPage(name) {
     if (!PAGES.includes(name)) name = 'home';
+    // Auth gate: redirect protected/auth pages based on session state.
+    if (window.MindMapAuth && window.MindMapAuth.gate) {
+      const redirect = window.MindMapAuth.gate(name);
+      if (redirect && redirect !== name) { showPage(redirect); return; }
+    }
     document.querySelectorAll('#app > [data-page]').forEach(el => {
       el.style.display = (el.getAttribute('data-page') === name) ? '' : 'none';
     });
@@ -500,6 +511,7 @@
 
   function saveMap() {
     if (!currentMap) { flash('Generate a map first.'); return; }
+    if (window.MindMapAuth && window.MindMapAuth.saveMap) { window.MindMapAuth.saveMap(currentMap); return; }
     try {
       const saved = JSON.parse(localStorage.getItem('mindmap.saved') || '[]');
       saved.push({ at: Date.now(), title: currentMap.root.label, root: currentMap.root, meta: currentMap.meta });
@@ -824,8 +836,29 @@
   });
 
   /* ---------------------------------------------------------
-     Open the initial page (from the URL, else Home)
+     Bridge for auth.js + gate-aware initial routing
   --------------------------------------------------------- */
-  showPage(PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home');
+  function applyInitialRoute() {
+    const hash = location.hash.slice(1);
+    showPage(PAGES.includes(hash) ? hash : 'home');
+  }
+
+  window.MindMapApp = {
+    navigate, showPage, hideAllPages, applyInitialRoute, flash,
+    getCurrentMap: () => currentMap,
+    loadMap: (data, title) => {
+      if (!data || !data.root) return;
+      currentMap = data;
+      mapEmpty.hidden = true;
+      map.setData(data.root);
+      navigate('generator');
+      flash('Loaded “' + (title || data.root.label) + '”.');
+    }
+  };
+
+  // Start blank; auth.js decides the first page once the session is known.
+  // Fallback: if the auth module never routes, show something after a moment.
+  hideAllPages();
+  setTimeout(() => { if (currentPage === null) applyInitialRoute(); }, 500);
 
 })();

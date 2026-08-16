@@ -5,7 +5,9 @@ luxury brand. Paste notes, upload a document, or name a topic, and watch your
 knowledge bloom into a beautiful, interactive mind map — then keep growing it
 every day with **Storybook Mode**.
 
-> Live, dependency-free, and fully static. Open `index.html` and go.
+> A Node/Express backend adds secure accounts, email verification, sessions,
+> user profiles, and an admin panel — while the mind-map generator itself is
+> unchanged. See **Accounts & security** below.
 
 ---
 
@@ -42,33 +44,88 @@ decide whether today's themes attach to an existing branch or spawn a new one.
 To wire in a real LLM later, replace `MindGen.fromText` / `MindGen.fromTopic`
 with an API call that returns the same `{ root, meta }` tree shape.
 
+## ✦ Accounts & security
+
+The app is gated behind authentication: an unauthenticated visitor sees the
+**Login** screen first, and the mind-map generator only appears after a valid,
+verified session exists. A Node/Express + SQLite backend serves both the site
+and the API.
+
+- **Auth flow:** Sign Up → email verification → Login → Mind Map Generator.
+  A logged-in user with a valid session is taken straight to the app on return.
+- **Email verification:** a secure, expiring, single-use link; unverified users
+  can't log in. The verify screen offers Resend, Change Email, and Back to Login.
+- **Forgot / reset password:** expiring, single-use reset links.
+- **Sessions:** stateless JWT in an `httpOnly`, `SameSite`, `Secure` cookie —
+  never localStorage. Log out invalidates it; the server is the source of truth.
+- **Profile & settings:** update your name and change your password; the nav
+  shows your name with Profile, Account Settings, and Log Out.
+- **Protected routes & data:** every `/api/maps` and `/api/admin` route is
+  server-authorized; each user sees only their own saved maps.
+- **Admin panel (`/admin`):** the single admin — `harshavardhangowda525@gmail.com`
+  (configurable via `ADMIN_EMAIL`) — is granted the admin role **server-side
+  only** and can view/search users, inspect details and saved maps, enable/disable
+  accounts, and delete accounts. The admin account itself can't be disabled/deleted.
+- **Disabled accounts:** can't log in and have existing sessions invalidated on
+  the next request, with a clear "account has been disabled" message.
+- **Security:** bcrypt password hashing, server-side authorization, rate-limited
+  auth endpoints, hashed + expiring tokens, input validation, and security
+  headers. No secret is hard-coded — all come from environment variables.
+
 ## ✦ Structure
 
 ```
-index.html          Page markup, SPA page router shell
-css/styles.css      Luxury editorial design system (dark charcoal + gold)
-js/generator.js     Client-side content-analysis engine → mind-map tree
-js/mindmap.js       Interactive SVG renderer (layouts, zoom, pan, drag, export)
-js/storybook.js     Curated daily resources for the example Storybook
-js/main.js          Orchestration: animations, canvases, page router, wiring
+index.html            Page markup + auth/profile/admin pages, SPA router shell
+css/styles.css        Luxury editorial design system (dark charcoal + gold)
+js/generator.js       Client-side content-analysis engine → mind-map tree
+js/mindmap.js         Interactive SVG renderer (layouts, zoom, pan, drag, export)
+js/storybook.js       Curated daily resources for the example Storybook
+js/main.js            Orchestration, animations, page router + auth gate
+js/auth.js            Auth client: session gate, login/signup/verify/reset,
+                      profile, settings, and the admin panel UI
+server/index.js       Express app: security headers, static frontend, API mount
+server/config.js      All configuration from environment variables
+server/db.js          SQLite schema (users, tokens, maps) + migrations
+server/tokens.js      Secure, expiring, single-use verify/reset tokens
+server/mailer.js      SMTP email (dev mode logs links to the console)
+server/middleware.js  requireAuth / requireVerified / requireAdmin guards
+server/routes/auth.js Signup, verify, login, logout, me, profile, password, reset
+server/routes/maps.js Per-user saved mind maps (CRUD, protected)
+server/routes/admin.js Admin: users, search, enable/disable, delete, maps, stats
 ```
 
 ## ✦ Run it
 
-No build step. Any static server works:
+Accounts need the backend. The Express server serves both the site and the API:
 
 ```bash
-python3 -m http.server 8000
-# then open http://localhost:8000
+npm install
+cp .env.example .env          # set JWT_SECRET; ADMIN_EMAIL defaults to the admin
+npm start                     # → http://localhost:3000
 ```
 
-Or simply open `index.html` in a modern browser. It also deploys as-is to any
-static host (GitHub Pages, Netlify, Cloudflare Pages, …).
+In development you don't need a mail server — verification and reset links are
+printed to the server console (and surfaced on the page) so you can test the
+whole flow locally.
+
+### Configuration (environment variables)
+
+Copy `.env.example` and set: `ADMIN_EMAIL` (the sole admin), `JWT_SECRET`
+(required in production), `DATABASE_FILE` (SQLite path), the `SMTP_*` values and
+`EMAIL_FROM` (email service + sender), `APP_URL` (public URL used in email
+links), and the token lifetimes. Never commit real secrets.
+
+### Deployment
+
+Deploy the Node app to any Node host (Render, Railway, Fly.io, a VPS, Docker).
+Set the environment variables above; for real emails configure `SMTP_*`
+(e.g. a Gmail App Password, SendGrid, Mailgun, Postmark). Swap `server/db.js`
+for Postgres if you want a managed database.
 
 ## ✦ Try it
 
-1. Go to **The Studio**, click **Load a sample resource**, then **Generate Mind Map**.
-2. Drag nodes, use the **+ / −** badges to collapse branches, scroll to zoom.
-3. Cycle **Layout**, then **Export** your map as a PNG.
-4. Open **Storybook Mode**, add a chapter from your own notes, add another, and
-   watch your knowledge connect and grow — then mark it **Finished**.
+1. **Sign Up**, then click the verification link (printed in the server console
+   in dev). You're taken to the generator.
+2. In **The Studio**, generate a map and press **Save** — find it under **Profile**.
+3. Open **Storybook Mode**, add chapters, and mark a book **Finished**.
+4. Sign up as `harshavardhangowda525@gmail.com` to access the **Admin Panel**.

@@ -1,0 +1,63 @@
+'use strict';
+/**
+ * SQLite database (via better-sqlite3). The DB module is deliberately isolated
+ * so it can be swapped for Postgres/MySQL by re-implementing this file.
+ */
+const path = require('path');
+const fs = require('fs');
+const Database = require('better-sqlite3');
+const config = require('./config');
+
+fs.mkdirSync(path.dirname(config.db.file), { recursive: true });
+
+const db = new Database(config.db.file);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id            TEXT PRIMARY KEY,
+    name          TEXT NOT NULL,
+    email         TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    verified      INTEGER NOT NULL DEFAULT 0,
+    role          TEXT NOT NULL DEFAULT 'user',    -- 'user' | 'admin'
+    status        TEXT NOT NULL DEFAULT 'active',  -- 'active' | 'disabled'
+    created_at    INTEGER NOT NULL,
+    updated_at    INTEGER NOT NULL DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS tokens (
+    id         TEXT PRIMARY KEY,
+    user_id    TEXT NOT NULL,
+    token_hash TEXT NOT NULL,
+    type       TEXT NOT NULL,               -- 'verify' | 'reset'
+    expires_at INTEGER NOT NULL,
+    used       INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_tokens_hash ON tokens(token_hash);
+
+  CREATE TABLE IF NOT EXISTS maps (
+    id         TEXT PRIMARY KEY,
+    user_id    TEXT NOT NULL,
+    title      TEXT NOT NULL,
+    data       TEXT NOT NULL,               -- JSON string of the mind map
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_maps_user ON maps(user_id);
+`);
+
+// --- lightweight migrations for databases created before role/status existed ---
+const cols = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+if (!cols.includes('role')) db.exec("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
+if (!cols.includes('status')) db.exec("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+if (!cols.includes('updated_at')) db.exec('ALTER TABLE users ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0');
+
+// Ensure the configured admin email always holds the admin role (idempotent).
+db.prepare("UPDATE users SET role = 'admin' WHERE email = ?").run(config.adminEmail);
+
+module.exports = db;

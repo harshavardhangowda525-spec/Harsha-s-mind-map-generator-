@@ -1,48 +1,62 @@
 /* =========================================================
-   auth.js — frontend authentication client + UI
-   Talks to the backend at /api (same origin by default).
-   Override with window.MINDMAP_API_BASE = 'https://api.example.com'
+   auth.js — authentication + saved maps via Supabase.
+   Runs entirely from the static frontend (no server to deploy).
+   Configure your keys in js/config.js. Setup: SUPABASE_SETUP.md
    ========================================================= */
 (function () {
   'use strict';
 
   const $ = (s, c) => (c || document).querySelector(s);
-  const API_BASE = (window.MINDMAP_API_BASE || '').replace(/\/+$/, '');
-  const state = { user: null, pendingEmail: null, resetToken: null };
+  const cfg = window.MINDMAP_CONFIG || {};
+  const configured = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY);
 
-  /* ---------- API helper ---------- */
-  async function api(path, opts) {
-    opts = opts || {};
-    const res = await fetch(API_BASE + '/api' + path, {
-      method: opts.method || 'GET',
-      credentials: 'include',
-      headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
-      body: opts.body ? JSON.stringify(opts.body) : undefined
+  // Capture the URL hash before Supabase consumes it (email-confirm returns
+  // #access_token=...&type=signup; recovery returns type=recovery).
+  const initialHash = location.hash + location.search;
+  const cameFromSignupLink = /type=signup/.test(initialHash);
+
+  let sb = null;
+  if (configured && window.supabase && window.supabase.createClient) {
+    sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
-    let data = null;
-    try { data = await res.json(); } catch (e) { /* non-JSON (e.g. a static-host 404 page) */ }
-    if (!res.ok) {
-      const err = new Error((data && data.error && data.error.message) || 'Request failed');
-      // No JSON body on an error usually means there's no API here at all
-      // (the page is on static hosting without the backend running).
-      err.code = (data && data.error && data.error.code) || (data ? 'HTTP_' + res.status : 'NO_BACKEND');
-      err.status = res.status;
-      err.data = data;
-      throw err;
-    }
-    return data;
   }
-  const isNetErr = (e) => (e instanceof TypeError) || e.code === 'NO_BACKEND' || /fetch/i.test(e.message || '');
-  const NO_BACKEND_MSG = "Couldn't reach the accounts server. Sign-up and login need the backend running — they don't work on static hosting like GitHub Pages or an opened file. Run “npm start” and open the site at that address, or deploy the server (see the README).";
-  const friendly = (e) => isNetErr(e) ? NO_BACKEND_MSG : (e.message || 'Something went wrong.');
 
-  /* ---------- small helpers ---------- */
+  const state = { user: null, pendingEmail: null };
+
+  /* ---------- helpers ---------- */
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const initials = (name) => (name || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const toast = (m) => { if (window.MindMapApp && window.MindMapApp.flash) window.MindMapApp.flash(m); };
   const nav = (p) => { if (window.MindMapApp && window.MindMapApp.navigate) window.MindMapApp.navigate(p); else location.hash = p; };
-  const showErr = (el, msg) => { el.textContent = msg; el.hidden = false; };
+  const showErr = (el, msg) => { if (el) { el.textContent = msg; el.hidden = false; } };
   const hide = (el) => { if (el) el.hidden = true; };
+  const appBaseUrl = () => location.origin + location.pathname; // must be whitelisted in Supabase
+
+  const NOT_CONFIGURED = 'Accounts aren’t connected yet. Add your Supabase URL and anon key in js/config.js (see SUPABASE_SETUP.md).';
+  const ensure = (el) => { if (!sb) { showErr(el, NOT_CONFIGURED); toast('Accounts not configured yet — see SUPABASE_SETUP.md'); return false; } return true; };
+
+  function mapUser(u) {
+    if (!u) return null;
+    return {
+      id: u.id,
+      email: u.email,
+      name: (u.user_metadata && (u.user_metadata.name || u.user_metadata.full_name)) || (u.email || '').split('@')[0],
+      verified: !!u.email_confirmed_at
+    };
+  }
+
+  // Friendlier text for common Supabase auth errors.
+  function friendly(error) {
+    const m = (error && error.message) || '';
+    if (/already registered|already exists/i.test(m)) return 'An account with this email already exists.';
+    if (/email not confirmed/i.test(m)) return 'Please verify your email first.';
+    if (/invalid login credentials/i.test(m)) return 'Incorrect email or password.';
+    if (/password should be at least/i.test(m)) return 'Password must be at least 8 characters.';
+    if (/rate limit|too many/i.test(m)) return 'Too many attempts — please wait a moment and try again.';
+    if (/redirect|not allowed/i.test(m)) return 'This site URL isn’t allowed in Supabase yet (add it under Authentication → URL Configuration).';
+    return m || 'Something went wrong.';
+  }
 
   /* ---------- nav rendering ---------- */
   function renderNav() {
@@ -54,7 +68,7 @@
         '<div class="nav__user">' +
           '<a class="nav__user-chip" href="#account" data-nav="account">' +
             '<span class="nav__avatar">' + initials(u.name) + '</span>' +
-            '<span class="nav__user-name">' + escapeHtml(u.name.split(' ')[0]) + '</span>' +
+            '<span class="nav__user-name">' + escapeHtml((u.name || '').split(' ')[0]) + '</span>' +
           '</a>' +
           '<button class="nav__logout" id="navLogout">Log out</button>' +
         '</div>';
@@ -75,27 +89,17 @@
     if (e.target.closest('#navLogout') || e.target.closest('#navLogoutM')) { e.preventDefault(); doLogout(); }
   });
 
-  async function refreshUser() {
-    try { const d = await api('/auth/me'); state.user = d.user; }
-    catch (e) { state.user = null; } // offline / no backend → treat as guest
-    renderNav();
-  }
-
   async function doLogout() {
-    try { await api('/auth/logout', { method: 'POST' }); } catch (e) { /* ignore */ }
+    if (sb) { try { await sb.auth.signOut(); } catch (e) { /* ignore */ } }
     state.user = null; renderNav();
     toast('Logged out.');
     nav('home');
   }
 
   /* ---------- verify page ---------- */
-  function showVerifyPage(email, devUrl) {
+  function showVerifyPage(email) {
     const em = $('#verifyEmail'); if (em) em.textContent = email || 'your email';
-    const dev = $('#verifyDev');
-    if (dev) {
-      if (devUrl) { $('#verifyDevLink').href = devUrl; dev.hidden = false; }
-      else dev.hidden = true;
-    }
+    hide($('#verifyDev')); // no dev link in the Supabase flow — real emails are sent
   }
 
   /* ---------- forms ---------- */
@@ -111,11 +115,20 @@
       if (!name || !email) return showErr(err, 'Please fill in every field.');
       if (password.length < 8) return showErr(err, 'Password must be at least 8 characters.');
       if (password !== confirmPassword) return showErr(err, 'Passwords do not match.');
+      if (!ensure(err)) return;
       const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
       try {
-        const d = await api('/auth/signup', { method: 'POST', body: { name, email, password, confirmPassword } });
-        state.pendingEmail = d.email;
-        showVerifyPage(d.email, d.devVerifyUrl);
+        const { data, error } = await sb.auth.signUp({
+          email, password,
+          options: { data: { name }, emailRedirectTo: appBaseUrl() }
+        });
+        if (error) throw error;
+        // With email confirmations on, an existing email returns a user with no identities.
+        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          return showErr(err, 'An account with this email already exists.');
+        }
+        state.pendingEmail = email;
+        showVerifyPage(email);
         nav('verify');
       } catch (ex) { showErr(err, friendly(ex)); }
       finally { btn.disabled = false; }
@@ -129,23 +142,23 @@
       const err = $('#loginError'); hide(err);
       const email = $('#loginEmail').value.trim();
       const password = $('#loginPassword').value;
+      if (!ensure(err)) return;
       const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
       try {
-        const d = await api('/auth/login', { method: 'POST', body: { email, password } });
-        state.user = d.user; renderNav();
-        toast('Welcome back, ' + d.user.name.split(' ')[0] + '.');
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+          if (/email not confirmed/i.test(error.message)) {
+            state.pendingEmail = email; showVerifyPage(email);
+            toast('Please verify your email first.'); nav('verify'); return;
+          }
+          throw error;
+        }
+        state.user = mapUser(data.user); renderNav();
+        toast('Welcome back, ' + (state.user.name || '').split(' ')[0] + '.');
         f.reset();
         nav('generator');
-      } catch (ex) {
-        if (ex.code === 'UNVERIFIED') {
-          state.pendingEmail = (ex.data && ex.data.email) || email;
-          showVerifyPage(state.pendingEmail);
-          toast('Please verify your email first.');
-          nav('verify');
-        } else {
-          showErr(err, friendly(ex));
-        }
-      } finally { btn.disabled = false; }
+      } catch (ex) { showErr(err, friendly(ex)); }
+      finally { btn.disabled = false; }
     });
   }
 
@@ -153,11 +166,12 @@
     const b = $('#resendBtn'); if (!b) return;
     b.addEventListener('click', async () => {
       const err = $('#verifyError'); hide(err);
-      if (!state.pendingEmail) return showErr(err, 'No email on file to resend to. Please sign up or log in again.');
+      if (!ensure(err)) return;
+      if (!state.pendingEmail) return showErr(err, 'No email on file. Please sign up or log in again.');
       b.disabled = true;
       try {
-        const d = await api('/auth/resend', { method: 'POST', body: { email: state.pendingEmail } });
-        showVerifyPage(state.pendingEmail, d.devVerifyUrl);
+        const { error } = await sb.auth.resend({ type: 'signup', email: state.pendingEmail, options: { emailRedirectTo: appBaseUrl() } });
+        if (error) throw error;
         toast('Verification email resent.');
       } catch (ex) { showErr(err, friendly(ex)); }
       finally { b.disabled = false; }
@@ -170,12 +184,13 @@
       e.preventDefault();
       const err = $('#forgotError'), ok = $('#forgotSuccess'); hide(err); hide(ok);
       const email = $('#forgotEmail').value.trim();
+      if (!ensure(err)) return;
       const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
       try {
-        const d = await api('/auth/forgot-password', { method: 'POST', body: { email } });
+        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: appBaseUrl() });
+        if (error) throw error;
         ok.textContent = 'If an account exists for that email, a reset link is on its way.'; ok.hidden = false;
-        const dev = $('#forgotDev');
-        if (d.devResetUrl) { $('#forgotDevLink').href = d.devResetUrl; dev.hidden = false; } else dev.hidden = true;
+        hide($('#forgotDev'));
       } catch (ex) { showErr(err, friendly(ex)); }
       finally { btn.disabled = false; }
     });
@@ -189,10 +204,11 @@
       const password = $('#resetPassword').value, confirmPassword = $('#resetConfirm').value;
       if (password.length < 8) return showErr(err, 'Password must be at least 8 characters.');
       if (password !== confirmPassword) return showErr(err, 'Passwords do not match.');
-      if (!state.resetToken) return showErr(err, 'This reset link is invalid. Request a new one.');
+      if (!ensure(err)) return;
       const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
       try {
-        await api('/auth/reset-password', { method: 'POST', body: { token: state.resetToken, password, confirmPassword } });
+        const { error } = await sb.auth.updateUser({ password });
+        if (error) throw error;
         ok.textContent = 'Password updated. Redirecting you to log in…'; ok.hidden = false;
         toast('Password updated.');
         setTimeout(() => nav('login'), 1300);
@@ -215,10 +231,11 @@
 
   async function loadMyMaps() {
     const list = $('#myMapsList'), empty = $('#myMapsEmpty'), count = $('#myMapsCount');
-    if (!state.user || !state.user.verified) { list.innerHTML = ''; empty.hidden = false; count.textContent = ''; return; }
+    if (!sb || !state.user) { list.innerHTML = ''; empty.hidden = false; count.textContent = ''; return; }
     try {
-      const d = await api('/maps');
-      const maps = d.maps || [];
+      const { data, error } = await sb.from('maps').select('id,title,updated_at').order('updated_at', { ascending: false });
+      if (error) throw error;
+      const maps = data || [];
       count.textContent = maps.length + (maps.length === 1 ? ' map' : ' maps');
       if (!maps.length) { list.innerHTML = ''; empty.hidden = false; return; }
       empty.hidden = true;
@@ -238,14 +255,18 @@
   document.addEventListener('click', async (e) => {
     const open = e.target.closest('[data-open]');
     const del = e.target.closest('.mapcard__del[data-del]');
-    if (open) {
+    if (open && sb) {
       try {
-        const d = await api('/maps/' + open.dataset.open);
-        if (window.MindMapApp && window.MindMapApp.loadMap) window.MindMapApp.loadMap(d.map.data, d.map.title);
+        const { data, error } = await sb.from('maps').select('title,data').eq('id', open.dataset.open).single();
+        if (error) throw error;
+        if (window.MindMapApp && window.MindMapApp.loadMap) window.MindMapApp.loadMap(data.data, data.title);
       } catch (ex) { toast('Could not open that map.'); }
-    } else if (del) {
-      try { await api('/maps/' + del.dataset.del, { method: 'DELETE' }); toast('Map deleted.'); loadMyMaps(); }
-      catch (ex) { toast('Could not delete that map.'); }
+    } else if (del && sb) {
+      try {
+        const { error } = await sb.from('maps').delete().eq('id', del.dataset.del);
+        if (error) throw error;
+        toast('Map deleted.'); loadMyMaps();
+      } catch (ex) { toast('Could not delete that map.'); }
     }
   });
 
@@ -256,40 +277,47 @@
     user: () => state.user,
     onAccountShown: renderAccount,
     async saveMap(mapObj) {
+      if (!sb) { toast(NOT_CONFIGURED); return; }
       if (!state.user) { toast('Sign in to save maps to your account.'); nav('login'); return; }
-      if (!state.user.verified) { toast('Verify your email to save maps to your account.'); nav('verify'); return; }
       try {
         const title = (mapObj && mapObj.root && mapObj.root.label) || 'Untitled map';
-        await api('/maps', { method: 'POST', body: { title, data: mapObj } });
+        const { error } = await sb.from('maps').insert({ title, data: mapObj });
+        if (error) throw error;
         toast('Saved to your account.');
-      } catch (ex) { toast(friendly(ex)); }
+      } catch (ex) { toast('Could not save: ' + friendly(ex)); }
     }
   };
 
   /* ---------- init ---------- */
-  function handleUrlParams() {
-    const params = new URLSearchParams(location.search);
-    const verify = params.get('verify');
-    const reset = params.get('reset');
-    if (verify) {
-      history.replaceState(null, '', location.pathname + location.hash);
-      if (verify === 'success') { toast('Email verified — welcome!'); return { go: 'generator' }; }
-      if (verify === 'expired') { toast('That verification link has expired. Request a new one.'); return { go: 'login' }; }
-      toast('That verification link is invalid.'); return { go: 'login' };
-    }
-    if (reset) {
-      state.resetToken = reset;
-      history.replaceState(null, '', location.pathname + location.hash);
-      return { go: 'reset' };
-    }
-    return null;
-  }
-
   function init() {
     renderNav();
     wireSignup(); wireLogin(); wireVerify(); wireForgot(); wireReset();
-    const action = handleUrlParams();
-    refreshUser().then(() => { if (action) nav(action.go); });
+
+    if (!sb) {
+      // Not configured yet — the site still works as a guest; account
+      // actions show a helpful message pointing at SUPABASE_SETUP.md.
+      return;
+    }
+
+    // Reflect the current session, then keep it in sync.
+    sb.auth.getSession().then(({ data }) => {
+      state.user = mapUser(data.session && data.session.user);
+      renderNav();
+    });
+
+    sb.auth.onAuthStateChange((event, session) => {
+      state.user = mapUser(session && session.user);
+      renderNav();
+      if (event === 'PASSWORD_RECOVERY') { nav('reset'); return; }
+      if (event === 'SIGNED_OUT') { return; }
+      if (event === 'SIGNED_IN' && cameFromSignupLink) {
+        toast('Email verified — welcome!');
+        nav('generator');
+      }
+      // Refresh the maps list if the account page is currently open.
+      const acct = $('#account');
+      if (state.user && acct && getComputedStyle(acct).display !== 'none') renderAccount();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

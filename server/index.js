@@ -23,7 +23,7 @@ app.use((req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data:",
-    "connect-src 'self'",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'"

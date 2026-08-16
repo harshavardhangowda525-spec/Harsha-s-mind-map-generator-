@@ -48,8 +48,17 @@ This keeps the experience instant and private. To wire in a real LLM later, repl
 
 ## ✦ Accounts & authentication
 
-A full authentication system backs the app so users can save their maps to an
-account and reach them from anywhere:
+**Accounts run with no server to deploy** — the frontend uses
+[Supabase](https://supabase.com) (free) for sign-up, login, real email
+verification, password reset, and per-user saved maps. Setup is ~5 minutes:
+create a project, paste two keys into `js/config.js`, run one SQL snippet.
+**See [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md).**
+
+> Prefer to self-host instead? The `server/` folder is an optional Node/Express
+> + SQLite backend that does the same thing on your own server (see below). You
+> only need one of the two — Supabase is the zero-server default.
+
+The account experience either way:
 
 - **Sign Up** (name, email, password, confirm) and **Log In** pages.
 - **Email verification** — on sign-up an account is created and a secure,

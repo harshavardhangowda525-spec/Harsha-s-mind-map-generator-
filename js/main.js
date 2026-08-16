@@ -318,6 +318,20 @@
   });
   let currentMap = null;
 
+  // --- Studio persistence (survives reload / close) ---
+  const SK = { map: 'mindmap.studioMap', text: 'mindmap.studioText', topic: 'mindmap.studioTopic' };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode / quota */ } };
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  function persistMap() {
+    try { currentMap ? localStorage.setItem(SK.map, JSON.stringify(currentMap)) : localStorage.removeItem(SK.map); } catch (e) { /* ignore */ }
+  }
+  function setCurrentMap(data) {
+    currentMap = data;
+    mapEmpty.hidden = true;
+    map.setData(data.root);
+    persistMap();
+  }
+
   // Tabs
   $$('.gen__tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -328,19 +342,25 @@
     });
   });
 
-  // Char count
-  const sourceText = $('#sourceText'), charCount = $('#charCount');
-  sourceText.addEventListener('input', () => { charCount.textContent = sourceText.value.length + ' characters'; });
+  // Char count (+ persist the typed source)
+  const sourceText = $('#sourceText'), charCount = $('#charCount'), topicInput = $('#topicInput');
+  sourceText.addEventListener('input', () => {
+    charCount.textContent = sourceText.value.length + ' characters';
+    lsSet(SK.text, sourceText.value);
+  });
+  topicInput.addEventListener('input', () => lsSet(SK.topic, topicInput.value));
 
   // Sample
   $('#loadSample').addEventListener('click', () => {
     sourceText.value = MindGen.SAMPLE;
     charCount.textContent = sourceText.value.length + ' characters';
+    lsSet(SK.text, sourceText.value);
   });
 
   // Topic chips
   $$('.chip').forEach(c => c.addEventListener('click', () => {
-    $('#topicInput').value = c.dataset.topic;
+    topicInput.value = c.dataset.topic;
+    lsSet(SK.topic, topicInput.value);
   }));
 
   // File upload
@@ -429,8 +449,7 @@
     const data = buildMap();
     if (!data) return;
     showLoading(() => {
-      currentMap = data;
-      map.setData(data.root);
+      setCurrentMap(data);
       document.getElementById('generator').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
@@ -442,7 +461,7 @@
     switch (action) {
       case 'regenerate': {
         const data = buildMap();
-        if (data) showLoading(() => { currentMap = data; map.setData(data.root); });
+        if (data) showLoading(() => { setCurrentMap(data); });
         break;
       }
       case 'expand': map.expandAll(); flash('Expanded all branches.'); break;
@@ -781,6 +800,33 @@
   renderTimeline();
   goToDay(activeBook.chapters.length ? activeBook.chapters.length - 1 : -1);
   updateUI();
+
+  // Restore the Studio (typed source, topic, and the last generated map).
+  (function restoreStudio() {
+    const t = lsGet(SK.text);
+    if (t) { sourceText.value = t; charCount.textContent = t.length + ' characters'; }
+    const tp = lsGet(SK.topic);
+    if (tp) topicInput.value = tp;
+    try {
+      const saved = JSON.parse(lsGet(SK.map) || 'null');
+      if (saved && saved.root) { currentMap = saved; mapEmpty.hidden = true; map.setData(saved.root); }
+    } catch (e) { /* ignore corrupt data */ }
+  })();
+
+  // Keep the Storybook compose draft (title + text you're typing) across reloads.
+  const bookTitleEl = $('#bookTitle'), storyInputEl = $('#storyInput');
+  const SD = { title: 'mindmap.draftTitle', text: 'mindmap.draftText' };
+  if (bookTitleEl) {
+    const dt = lsGet(SD.title); if (dt && !bookTitleEl.value) bookTitleEl.value = dt;
+    bookTitleEl.addEventListener('input', () => lsSet(SD.title, bookTitleEl.value));
+  }
+  if (storyInputEl) {
+    const dx = lsGet(SD.text); if (dx) storyInputEl.value = dx;
+    storyInputEl.addEventListener('input', () => lsSet(SD.text, storyInputEl.value));
+  }
+  // Clear the saved draft text once a chapter is committed.
+  const storyAddBtn = $('#storyAdd');
+  if (storyAddBtn) storyAddBtn.addEventListener('click', () => { lsSet(SD.text, ''); });
 
   /* =========================================================
      JOURNEY dashboard cards

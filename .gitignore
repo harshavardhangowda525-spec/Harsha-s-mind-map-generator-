@@ -1,7 +1,9 @@
 node_modules/
-scratchpad/
-data/
-.env
-.env.local
-*.log
+.next/
+out/
+.vercel/
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
 .DS_Store
+npm-debug.log*

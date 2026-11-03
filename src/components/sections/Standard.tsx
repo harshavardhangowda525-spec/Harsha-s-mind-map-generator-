@@ -111,7 +111,7 @@ export function Standard() {
           <span>Discipline</span><span className="text-outline-ember">Strength</span><span>Performance</span><span>Discipline</span><span className="text-outline-ember">Strength</span>
         </div>
         <div data-k="row-b" className="display flex w-max gap-8 whitespace-nowrap text-[clamp(4.5rem,14vw,13rem)] leading-none text-outline">
-          <span>Premium</span><span>Quality</span><span className="text-outline-ember">Iron</span><span>Pulse</span><span>Premium</span><span>Quality</span>
+          <span>Premium</span><span>Quality</span><span className="text-outline-ember">Planet</span><span>Muscle</span><span>Premium</span><span>Quality</span>
         </div>
       </div>
 

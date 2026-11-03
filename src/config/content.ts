@@ -81,7 +81,7 @@ export const testimonials: Testimonial[] = [
 /* ─────────────────────────────── FAQ ─────────────────────────────── */
 export const faqs: { q: string; a: string }[] = [
   {
-    q: "I've never trained in a gym before. Is IRON PULSE right for me?",
+    q: "I've never trained in a gym before. Is Planet Muscle right for me?",
     a: "Yes. Every new member can start with a guided introduction to the floor and equipment, and our coaches scale every program to your level. Book a free visit and we'll walk you through it.",
   },
   {

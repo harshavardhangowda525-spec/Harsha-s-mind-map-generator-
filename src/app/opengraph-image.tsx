@@ -28,7 +28,8 @@ export default async function OpengraphImage() {
           <div style={{ fontSize: 26, letterSpacing: 8, color: "#bdbdbd" }}>PREMIUM GYM &amp; TRAINING CENTER</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ fontSize: 150, fontWeight: 900, letterSpacing: -4, lineHeight: 0.95 }}>{site.name}</div>
+          <div style={{ fontSize: 150, fontWeight: 900, letterSpacing: -4, lineHeight: 0.95 }}>{site.brandMark}</div>
+          <div style={{ fontSize: 40, letterSpacing: 10, color: "#bdbdbd", marginTop: 12 }}>{site.brandSub.toUpperCase()}</div>
           <div style={{ fontSize: 56, fontWeight: 800, color: "#FF5A1F", marginTop: 18 }}>{site.tagline}</div>
         </div>
         <div style={{ display: "flex", fontSize: 26, color: "#9a9a9a", letterSpacing: 4 }}>

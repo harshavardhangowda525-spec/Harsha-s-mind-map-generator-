@@ -1,7 +1,7 @@
 import { site } from "@/config/site";
 import { cn } from "@/lib/utils";
 
-/** IRON PULSE wordmark with a pulse-line monogram. */
+/** Brand wordmark (two lines) with a pulse-line monogram. */
 export function Logo({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
@@ -17,8 +17,11 @@ export function Logo({ className, compact = false }: { className?: string; compa
         />
       </svg>
       {!compact && (
-        <span className="display text-[1.35rem] leading-none tracking-[0.06em] text-metal">
-          {site.name}
+        <span className="flex flex-col" aria-hidden="true">
+          <span className="display text-[1.3rem] leading-none tracking-[0.06em] text-metal">{site.brandMark}</span>
+          <span className="mt-1 text-[0.5rem] font-semibold uppercase leading-none tracking-[0.24em] whitespace-nowrap text-mute">
+            {site.brandSub}
+          </span>
         </span>
       )}
       <span className="sr-only">{site.name}</span>

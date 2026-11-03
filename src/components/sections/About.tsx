@@ -67,7 +67,7 @@ export function About() {
 
           <div className="mt-8 space-y-5 text-base leading-relaxed text-mute sm:text-lg" data-reveal style={{ ["--d" as string]: 150 }}>
             <p>
-              <span className="text-chrome">IRON PULSE was built on one belief:</span> results come from showing up, training with intent and
+              <span className="text-chrome">Planet Muscle was built on one belief:</span> results come from showing up, training with intent and
               being held to a higher standard. Every detail of the space is designed to help you do exactly that.
             </p>
             <p>

@@ -27,7 +27,7 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
+    const mq = window.matchMedia("(min-width: 1280px)");
     const onChange = () => mq.matches && setOpen(false);
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -57,7 +57,7 @@ export function Header() {
             <Logo />
           </a>
 
-          <ul className="hidden items-center gap-1 lg:flex">
+          <ul className="hidden items-center gap-1 xl:flex">
             {navLinks.map((l) => (
               <li key={l.id}>
                 <a
@@ -83,13 +83,13 @@ export function Header() {
           <div className="flex items-center gap-3">
             <a
               href="#membership"
-              className="hidden min-h-11 items-center gap-2 rounded-[2px] bg-ember px-5 text-[0.72rem] font-bold uppercase tracking-[0.2em] text-[#0b0b0b] transition-colors hover:bg-[#ff6d38] sm:inline-flex"
+              className="hidden min-h-11 items-center gap-2 whitespace-nowrap rounded-[2px] bg-ember px-5 text-[0.72rem] font-bold uppercase tracking-[0.2em] text-[#0b0b0b] transition-colors hover:bg-[#ff6d38] sm:inline-flex"
             >
               Join now <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
             </a>
             <button
               type="button"
-              className="relative z-10 inline-flex h-11 w-11 items-center justify-center rounded-[2px] border border-white/15 text-chrome lg:hidden"
+              className="relative z-10 inline-flex h-11 w-11 items-center justify-center rounded-[2px] border border-white/15 text-chrome xl:hidden"
               aria-expanded={open}
               aria-controls="mobile-menu"
               aria-label={open ? "Close menu" : "Open menu"}
@@ -109,7 +109,7 @@ export function Header() {
             role="dialog"
             aria-modal="true"
             aria-label="Site menu"
-            className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-ink pt-24 lg:hidden"
+            className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-ink pt-24 xl:hidden"
             initial={{ clipPath: "inset(0 0 100% 0)" }}
             animate={{ clipPath: "inset(0 0 0% 0)" }}
             exit={{ clipPath: "inset(0 0 100% 0)" }}

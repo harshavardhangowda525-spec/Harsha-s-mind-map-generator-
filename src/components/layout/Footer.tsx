@@ -68,8 +68,8 @@ export function Footer() {
         </div>
 
         <div className="pointer-events-none relative mt-20 select-none" aria-hidden="true">
-          <p className="display whitespace-nowrap text-center text-[clamp(4rem,19vw,19rem)] leading-[0.8] text-outline">
-            IRON PULSE
+          <p className="display whitespace-nowrap text-center text-[clamp(2.5rem,14.5vw,15rem)] leading-[0.8] text-outline">
+            {site.brandMark}
           </p>
           <div className="absolute inset-x-0 bottom-[18%] h-[3px] origin-left bg-ember" data-reveal="line" />
         </div>

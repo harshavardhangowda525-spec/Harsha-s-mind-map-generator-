@@ -23,8 +23,9 @@ export default function Home() {
       <div className="loader" aria-hidden="true">
         <div className="flex flex-col items-center gap-4">
           <div className="loader__mark">
-            <span className="display text-5xl tracking-[0.08em] text-metal sm:text-7xl">{site.name}</span>
+            <span className="display text-5xl tracking-[0.08em] text-metal sm:text-7xl">{site.brandMark}</span>
           </div>
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-mute">{site.brandSub}</p>
           <div className="loader__bar w-40" />
         </div>
       </div>

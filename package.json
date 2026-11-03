@@ -1,8 +1,8 @@
 {
-  "name": "iron-pulse",
+  "name": "planet-muscle",
   "version": "1.0.0",
   "private": true,
-  "description": "IRON PULSE — premium gym website (Next.js App Router)",
+  "description": "Planet Muscle Performance & Fitness Centre — premium gym website (Next.js App Router)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

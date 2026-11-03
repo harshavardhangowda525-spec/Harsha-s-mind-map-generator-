@@ -81,7 +81,8 @@ export function Contact() {
             )}
             <div className="relative mx-4 mb-4 mt-auto border border-white/10 bg-[#0a0a0a]/90 p-5 backdrop-blur sm:mx-6 sm:mb-6 sm:p-6">
               <p className="text-[0.66rem] font-semibold uppercase tracking-[0.22em] text-ember">Find us</p>
-              <p className="display mt-2 text-3xl text-chrome">{site.name}</p>
+              <p className="display mt-2 text-3xl text-chrome">{site.brandMark}</p>
+              <p className="mt-1 text-[0.65rem] font-semibold uppercase tracking-[0.24em] text-mute">{site.brandSub}</p>
               <p className="mt-2 text-sm leading-relaxed text-mute">{fullAddress}</p>
               <div className="mt-5 flex flex-col gap-2 sm:flex-row">
                 <a href={c.mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 bg-ember px-5 text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#0b0b0b] hover:bg-[#ff6d38]">

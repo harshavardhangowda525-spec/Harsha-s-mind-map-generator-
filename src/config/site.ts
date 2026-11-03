@@ -1,6 +1,6 @@
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- *  IRON PULSE — SITE CONFIGURATION
+ *  PLANET MUSCLE — SITE CONFIGURATION
  *  Every business detail on the website comes from this file.
  *  Edit values here; no component changes are required.
  *
@@ -10,14 +10,19 @@
  */
 
 export const site = {
-  name: "IRON PULSE",
-  shortName: "Iron Pulse",
+  /** Full business name (titles, SEO, legal). */
+  name: "Planet Muscle Performance & Fitness Centre",
+  /** Short name used in messages and the app manifest. */
+  shortName: "Planet Muscle",
+  /** Logo wordmark (large) and its second line (small). */
+  brandMark: "PLANET MUSCLE",
+  brandSub: "Performance & Fitness Centre",
   tagline: "BEYOND YOUR LIMITS.",
   description:
-    "IRON PULSE is a premium gym and training center offering strength training, personal coaching, functional fitness, group classes and recovery — built for people who want to train with purpose.",
+    "Planet Muscle Performance & Fitness Centre is a premium gym and training center offering strength training, personal coaching, functional fitness, group classes and recovery — built for people who want to train with purpose.",
 
   /** Production URL. Prefer setting NEXT_PUBLIC_SITE_URL in Vercel. */
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://iron-pulse.vercel.app",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://planet-muscle.vercel.app",
   locale: "en_IN",
 
   contact: {
@@ -84,7 +89,7 @@ export const site = {
   },
 
   legal: {
-    businessName: "IRON PULSE Fitness", // ⚠ PLACEHOLDER — registered business name
+    businessName: "Planet Muscle Performance & Fitness Centre", // ⚠ PLACEHOLDER — registered business name
     privacyLastUpdated: "2026-11-03",
   },
 } as const;

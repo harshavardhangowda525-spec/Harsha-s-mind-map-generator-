@@ -9,8 +9,8 @@ const archivo = Archivo({ subsets: ["latin"], variable: "--font-archivo", displa
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name} — Premium Gym & Training Center | ${site.tagline}`,
-    template: `%s | ${site.name}`,
+    default: `${site.name} | ${site.tagline}`,
+    template: `%s | ${site.shortName}`,
   },
   description: site.description,
   applicationName: site.name,

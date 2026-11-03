@@ -1,0 +1,5 @@
+User-Agent: *
+Allow: /
+
+Host: https://harshavardhangowda525-spec.github.io/Harsha-s-mind-map-generator-/iron-pulse
+Sitemap: https://harshavardhangowda525-spec.github.io/Harsha-s-mind-map-generator-/iron-pulse/sitemap.xml

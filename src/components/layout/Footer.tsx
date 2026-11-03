@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowUp, ArrowUpRight } from "lucide-react";
 import { fullAddress, navLinks, site } from "@/config/site";
 import { programs } from "@/config/programs";
@@ -66,19 +67,19 @@ export function Footer() {
           </FooterCol>
         </div>
 
-        <div className="relative mt-20 select-none" aria-hidden="true">
+        <div className="pointer-events-none relative mt-20 select-none" aria-hidden="true">
           <p className="display whitespace-nowrap text-center text-[clamp(4rem,19vw,19rem)] leading-[0.8] text-outline">
             IRON PULSE
           </p>
           <div className="absolute inset-x-0 bottom-[18%] h-[3px] origin-left bg-ember" data-reveal="line" />
         </div>
 
-        <div className="mt-10 flex flex-col-reverse gap-6 border-t border-white/10 pt-6 text-xs text-dim sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col-reverse gap-6 relative border-t border-white/10 pt-6 text-xs text-dim sm:flex-row sm:items-center sm:justify-between md:pr-20">
           <p>
             © {year} {site.legal.businessName}. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <a href="/privacy" className="hover:text-chrome">Privacy policy</a>
+            <Link href="/privacy" className="hover:text-chrome">Privacy policy</Link>
             <a
               href="#home"
               className="group inline-flex items-center gap-2 font-semibold uppercase tracking-[0.2em] text-silver hover:text-ember"

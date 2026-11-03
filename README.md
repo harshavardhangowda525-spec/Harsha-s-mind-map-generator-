@@ -115,6 +115,22 @@ After all photos are local, you can remove the Unsplash entry from `next.config.
 
 ---
 
+## GitHub Pages preview (static)
+
+A static preview can be exported for GitHub Pages (no image optimisation or security headers,
+since Pages is static hosting; use Vercel for production):
+
+```bash
+PAGES_BASE_PATH=/<repo-name>/iron-pulse \
+NEXT_PUBLIC_SITE_URL=https://<user>.github.io/<repo-name>/iron-pulse \
+npm run build:pages     # writes the static site to ./out
+```
+
+Copy `out/` into the `iron-pulse/` folder of the branch GitHub Pages serves. Keep a `.nojekyll`
+file at that branch's root so the `_next/` folder is served.
+
+---
+
 ## Project structure
 
 ```
